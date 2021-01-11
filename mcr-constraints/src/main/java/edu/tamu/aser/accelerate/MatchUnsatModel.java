@@ -28,7 +28,7 @@ public class MatchUnsatModel {
     /**
      * 每此约束求解前初始化之前trace的所有记录的命名（z3语法要求）和所有条件的可能组合
      */
-    public void initCurAssertNums() {
+    public void init() {
         curAssertNameSet.clear();
         curAllConditionsList.clear();
     }
@@ -125,10 +125,15 @@ public class MatchUnsatModel {
 
         curAllConditionsList.add(getAssertAllPossibleCondition(simple));
 
+//        if (addCurAssertNames(assertName))
+//            return "(! " + simple + " :named " + assertName + " )";
+//        else
+//            return simple;
+
         if (addCurAssertNames(assertName))
-            return "(! " + simple + " :named " + assertName + " )";
+            return "(assert (! " + simple + " :named " + assertName + " ) )\n";
         else
-            return simple;
+            return "(assert " + simple + " )\n";
     }
 
     /***
@@ -142,28 +147,35 @@ public class MatchUnsatModel {
 
         AssertDetailInfo assertDetailInfo = AssertDetailInfo.getAssertDetailInfo(complex);
 
-        String left = assertDetailInfo.getLeft();
-        String right = assertDetailInfo.getRight();
-        String relation = assertDetailInfo.getRelation();
-        AssertDetailInfo leftAssertDetailInfo = AssertDetailInfo.getAssertDetailInfo(left);
-        AssertDetailInfo rightAssertDetailInfo = AssertDetailInfo.getAssertDetailInfo(right);
+        if (assertDetailInfo == null) // 是一个简单条件
+            result.append(namedSimpleAssert(complex));
+        else {
+            String left = assertDetailInfo.getLeft();
+            String right = assertDetailInfo.getRight();
+            String relation = assertDetailInfo.getRelation();
+            AssertDetailInfo leftAssertDetailInfo = AssertDetailInfo.getAssertDetailInfo(left);
+            AssertDetailInfo rightAssertDetailInfo = AssertDetailInfo.getAssertDetailInfo(right);
 
-        if (relation == "AND") {
-            // and条件拆开后命名
-            if (leftAssertDetailInfo == null)
-                result.append("(assert " + namedSimpleAssert(left) + " )\n");
-            else
-                result.append(namedComplexAssert(left));
+            if (relation == "AND") {
+                // and条件拆开后命名
+                if (leftAssertDetailInfo == null)
+//                result.append("(assert " + namedSimpleAssert(left) + " )\n");
+                    result.append(namedSimpleAssert(left));
+                else
+                    result.append(namedComplexAssert(left));
 
-            if (rightAssertDetailInfo == null)
-                result.append("(assert " + namedSimpleAssert(right) + " )\n");
-            else
-                result.append(namedComplexAssert(right));
-        } else if (relation == "OR") {
-            // or条件整句命名
-            result.append("(assert " + namedSimpleAssert(complex) + " )\n");
+                if (rightAssertDetailInfo == null)
+//                result.append("(assert " + namedSimpleAssert(right) + " )\n");
+                    result.append(namedSimpleAssert(right));
+                else
+                    result.append(namedComplexAssert(right));
+            } else if (relation == "OR") {
+                // or条件整句命名
+//            result.append("(assert " + namedSimpleAssert(complex) + " )\n");
+                result.append(namedSimpleAssert(complex));
+            }
+
         }
-
 
         return result;
     }

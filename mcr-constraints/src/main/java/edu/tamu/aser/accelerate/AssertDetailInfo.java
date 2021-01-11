@@ -40,16 +40,16 @@ public class AssertDetailInfo {
             ++i;
         } while (i < lines.length && parentthesis > 0);
 
+        if (i < lines.length)
+            do {
+                String line = lines[i];
 
-        do {
-            String line = lines[i];
+                if (line.contains("("))
+                    parentthesis++;
+                else if (line.contains(")"))
+                    parentthesis--;
 
-            if (line.contains("("))
-                parentthesis++;
-            else if (line.contains(")"))
-                parentthesis--;
-
-            assertDetailInfo.addRight(line + " ");
+                assertDetailInfo.addRight(line + " ");
 
             ++i;
         } while (i < lines.length && parentthesis > 0);

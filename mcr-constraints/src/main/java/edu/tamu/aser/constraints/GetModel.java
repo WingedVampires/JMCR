@@ -32,259 +32,237 @@
 
 package edu.tamu.aser.constraints;
 
-import java.util.Vector;
-import java.text.DecimalFormat;
-
+import edu.tamu.aser.accelerate.MatchUnsatModel;
 import edu.tamu.aser.config.Configuration;
+import org.w3c.tools.sexpr.SimpleSExprStream;
 import org.w3c.tools.sexpr.Symbol;
 
-import org.w3c.tools.sexpr.SimpleSExprStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.io.File;
+import java.io.*;
+import java.text.DecimalFormat;
+import java.util.Vector;
 
 /**
  * Parser of the model returned by Z3
- * 
- * @author jeffhuang
  *
+ * @author jeffhuang
  */
 
-public class GetModel
-{
-	public static Model read(File file)
-	{
-		try{
+public class GetModel {
+	public static Model read(File file) {
+		try {
 
 			FileInputStream fis = new FileInputStream(file);
 			SimpleSExprStream p = new SimpleSExprStream(fis);
 			p.setListsAsVectors(true);
-			
+
 			String result = readResult(p);
-			
+
 			//get sovling time
 			BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
-		
-			if(result.startsWith("(error "))
+
+			if (result.startsWith("(error "))
 				throw new Error("smt file has errors");
 			//System.out.println("Feasible: " + "sat".equals(result));
 
-			if("sat".equals(result)) {
+			if ("sat".equals(result)) {
 				//if the constraints are satisfied
 
 				Model model = process((Vector) p.parse());
-				
+
 				String line = reader.readLine();
-				while(line !=null){
+				while (line != null) {
 					if (line.contains(":time")) {
 //						String[] vStrings = line.split("\\s+");
 						String time = line.split("\\s+")[2];
-						
-						float f= Float.valueOf(time.replace(")", ""));
-						float t = f*1000;
+
+						float f = Float.valueOf(time.replace(")", ""));
+						float t = f * 1000;
 						Configuration.solveTime += t;
 						break;
 					}
 					line = reader.readLine();
 				}
-				
+
 				fis.close();
 				return model;
-			}
-			else if("unsat".equals(result))
-			{
+			} else if ("unsat".equals(result)) {
 				//constraint not satisfied
 				String line = reader.readLine();
-				while(line !=null){
+				while (line != null) {
+					if (line.contains("A")) {
+						MatchUnsatModel.getInstance().addUnsatCore(line.substring(1, line.length() - 1));
+					}
+
 					if (line.contains(":time")) {
 //						String[] vStrings = line.split("\\s+");
 						String time = line.split("\\s+")[2];
-						float f= Float.valueOf(time.replace(")", ""));
-						float t = f*1000;
+						float f = Float.valueOf(time.replace(")", ""));
+						float t = f * 1000;
 						Configuration.solveTime += t;
 						break;
 					}
 					line = reader.readLine();
 				}
-			}
-			else
-				System.err.println("Solver error: "+result);
-			
+			} else
+				System.err.println("Solver error: " + result);
+
 			fis.close();
 			return null;
-		}catch(Exception | Error e){
+		} catch (Exception | Error e) {
 			//throw new Error(e);
 			e.printStackTrace();
 			return null;
 		}
-    }
+	}
 
-	static String readResult(SimpleSExprStream p) throws IOException
-	{
+	static String readResult(SimpleSExprStream p) throws IOException {
 		final int len = 10;
 		char[] cs = new char[len];
 		int c = p.read();
-		
+
 		int i = 0;
-		while(c > 0 && c != '\n' && c != '\r'){
-			if(i < len)
+		while (c > 0 && c != '\n' && c != '\r') {
+			if (i < len)
 				cs[i++] = (char) c;
 			c = p.read();
 		}
-		if(c < 0)
+		if (c < 0)
 			return null;
 		return new String(cs, 0, i);
 	}
-	
-	private static Model process(Vector root)
-	{
 
-		if(!((Symbol) root.elementAt(0)).toString().equals("model"))
+	private static Model process(Vector root) {
+
+		if (!((Symbol) root.elementAt(0)).toString().equals("model"))
 			assert false;
 
 		Model model = new Model();
-	
+
 		int size = root.size();
-		for(int i = 1; i < size; i++)
+		for (int i = 1; i < size; i++) {
+			// 当检测到返回Ax的Bool值时停止扫描
+			if (((Vector) root.elementAt(i)).elementAt(1).toString().contains("A"))
+				continue;
+
 			define_fun(root.elementAt(i), model);
-		
+		}
+
 		return model;
 	}
 
-	static private void define_fun(Object obj, Model model)
-	{
+	static private void define_fun(Object obj, Model model) {
 		Vector node = (Vector) obj;
-		if(!((Symbol) node.elementAt(0)).toString().equals("define-fun"))
+		if (!((Symbol) node.elementAt(0)).toString().equals("define-fun"))
 			assert false;
 		String varName = ((Symbol) node.elementAt(1)).toString();
 		//System.out.print(varName + " ");
-				
+
 		Object value = value(node.elementAt(2), node.elementAt(3), node.elementAt(4));
 		//System.out.println(value);
-		
+
 		model.put(varName, value);
 	}
 
-	static private Object value(Object paramTypes, Object type, Object v)
-	{
-		if(type instanceof Symbol){
+	static private Object value(Object paramTypes, Object type, Object v) {
+		if (type instanceof Symbol) {
 			String t = ((Symbol) type).toString();
 			return primValue(paramTypes, t, v);
-		}
-		else if(type instanceof Vector){
+		} else if (type instanceof Vector) {
 			Object t = ((Vector) type).elementAt(0);
-			if(t instanceof Symbol){
-				if(((Symbol) t).toString().equals("Array")){
+			if (t instanceof Symbol) {
+				if (((Symbol) t).toString().equals("Array")) {
 					Vector value = (Vector) v;
-					if(!("_".equals(((Symbol) value.elementAt(0)).toString())))
+					if (!("_".equals(((Symbol) value.elementAt(0)).toString())))
 						assert false;
-					if(!("as-array".equals(((Symbol) value.elementAt(1)).toString())))
+					if (!("as-array".equals(((Symbol) value.elementAt(1)).toString())))
 						assert false;
 					return ((Symbol) value.elementAt(2)).toString();
-				}
-				else 
-					assert false; 
-			}
-			else
+				} else
+					assert false;
+			} else
 				assert false;
 		}
 		return null;
 	}
 
-	static private Object primValue(Object paramTypes, String t, Object v)
-	{
-		if("Int".equals(t) || "Real".equals(t)){
+	static private Object primValue(Object paramTypes, String t, Object v) {
+		if ("Int".equals(t) || "Real".equals(t)) {
 			Number ret = number(t, v);
-			if(ret != null){
+			if (ret != null) {
 				return ret;
-			}
-			else{
+			} else {
 				Vector value = (Vector) v;
 				String opName = ((Symbol) value.elementAt(0)).toString();
-				if(opName.equals("ite")){
+				if (opName.equals("ite")) {
 					Model.Array array = new Model.Array();
 					ite(t, value, array);
 					return array;
-				}
-				else
+				} else
 					assert false;
 			}
-		}
-		else
+		} else
 			assert false;
 		return null;
 	}
-	
-	static private void ite(String t, Vector iteExpr, Model.Array array)
-	{
+
+	static private void ite(String t, Vector iteExpr, Model.Array array) {
 		String opName = ((Symbol) iteExpr.elementAt(0)).toString();
-		if(opName.equals("ite")){
+		if (opName.equals("ite")) {
 			Vector cond = (Vector) iteExpr.elementAt(1);
 			Object thenVal = iteExpr.elementAt(2);
 			Object elseVal = iteExpr.elementAt(3);
 
 			//find the index
 			Integer index = null;
-			if(((Symbol) cond.elementAt(0)).toString().equals("=")){
+			if (((Symbol) cond.elementAt(0)).toString().equals("=")) {
 				index = (Integer) number("Int", cond.elementAt(2));
-			}
-			else
+			} else
 				assert false;
-			
+
 			array.put(index, number(t, thenVal));
-			
+
 			Number num = number(t, elseVal);
-			if(num != null){
+			if (num != null) {
 				array.setDefaultValue(num);
-			}
-			else{
+			} else {
 				//must be another ite
 				ite(t, (Vector) elseVal, array);
 			}
 		}
 	}
 
-	static private Number number(String t, Object v)
-	{
-		if(v instanceof Number){
+	static private Number number(String t, Object v) {
+		if (v instanceof Number) {
 			//positive number
 			return (Number) v;
-		}
-		else if(v instanceof Vector){
+		} else if (v instanceof Vector) {
 			Vector value = (Vector) v;
 			String opName = ((Symbol) value.elementAt(0)).toString();
-			if(opName.equals("-")){
+			if (opName.equals("-")) {
 				//negative number
 				v = value.elementAt(1);
-				if(v instanceof Vector){
+				if (v instanceof Vector) {
 					//negative rational number
 					value = (Vector) v;
 					opName = ((Symbol) value.elementAt(0)).toString();
-					if(opName.equals("/")){
+					if (opName.equals("/")) {
 						Number numerator = (Number) value.elementAt(1);
 						Number denominator = (Number) value.elementAt(2);
 						return fromRational(false, numerator, denominator);
-					}
-					else
+					} else
 						assert false;
-				}
-				else{
+				} else {
 					Number mag = (Number) v;
 					//System.out.println("**"+type);
-					if("Int".equals(t)){
+					if ("Int".equals(t)) {
 						return 0 - mag.intValue();
-					}
-					else if("Real".equals(t)){
+					} else if ("Real".equals(t)) {
 						return 0 - mag.doubleValue();
-					}
-					else 
+					} else
 						assert false;
 					//System.out.println(v);
 				}
-			}
-			else if(opName.equals("/")){
+			} else if (opName.equals("/")) {
 				Number numerator = (Number) value.elementAt(1);
 				Number denominator = (Number) value.elementAt(2);
 				return fromRational(true, numerator, denominator);
@@ -294,38 +272,35 @@ public class GetModel
 		throw new RuntimeException("");
 	}
 
-	private static Double fromRational(boolean sign, Number numerator, Number denominator)
-	{
+	private static Double fromRational(boolean sign, Number numerator, Number denominator) {
 		DecimalFormat oneDForm = new DecimalFormat("#.#");
-		double d = numerator.doubleValue()/denominator.doubleValue();
+		double d = numerator.doubleValue() / denominator.doubleValue();
 		d = Double.valueOf(oneDForm.format(d));
 		d = sign ? d : -d;
-        return d;
+		return d;
 	}
 
 	//for testing
-	public static void main(String[] args) 
-	{
+	public static void main(String[] args) {
 		String dirName = "z3";
 		File dir = new File(dirName);
-		if(!dir.exists())
+		if (!dir.exists())
 			throw new RuntimeException();
 
 		File[] z3OutFiles;
-		if(args.length > 1) {
+		if (args.length > 1) {
 			z3OutFiles = new File[1];
-			z3OutFiles[0] = new File(dir, "z3out."+1);
-		}
-		else{
+			z3OutFiles[0] = new File(dir, "z3out." + 1);
+		} else {
 			z3OutFiles = dir.listFiles(new java.io.FileFilter() {
-					public boolean accept(File f) {
-						return f.getName().startsWith("z3out.");
-					}
-				});
+				public boolean accept(File f) {
+					return f.getName().startsWith("z3out.");
+				}
+			});
 		}
 
-        assert z3OutFiles != null;
-        for(File f : z3OutFiles) {
+		assert z3OutFiles != null;
+		for (File f : z3OutFiles) {
 			System.out.println("reading " + f.getName());
 			read(f);
 		}

@@ -1,6 +1,7 @@
 
 package edu.tamu.aser.constraints;
 
+import edu.tamu.aser.accelerate.MatchUnsatModel;
 import edu.tamu.aser.config.Configuration;
 import edu.tamu.aser.graph.LockSetEngine;
 import edu.tamu.aser.graph.ReachabilityEngine;
@@ -129,7 +130,8 @@ public class ConstraintsBuildEngine {
                     {
                         long thisGID = nodes.get(i).getGID();
                         String var = makeVariable(thisGID);
-                        CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(var).append("))\n");
+//                        CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(var).append("))\n");
+                        CONS_ASSERT_PO.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + lastVar + " " + var + " )"));
 
                         reachEngine.addEdge(lastGID, thisGID);
 
@@ -166,7 +168,8 @@ public class ConstraintsBuildEngine {
                     {
                         long thisGID = nodes.get(j).getGID();
                         String var = makeVariable(thisGID);
-                        CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(var).append("))\n");
+//                        CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(var).append("))\n");
+                        CONS_ASSERT_PO.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + lastVar + " " + var + " )"));
 
                         //the order is added to reachability engine for quick testing
                         reachEngine.addEdge(lastGID, thisGID);
@@ -201,7 +204,8 @@ public class ConstraintsBuildEngine {
                         {
                             long thisGID = nodes.get(j).getGID();
                             String var = makeVariable(thisGID);
-                            CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(var).append("))\n");
+//                            CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(var).append("))\n");
+                            CONS_ASSERT_PO.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + lastVar + " " + var + " )"));
 
                             //the order is added to reachability engine for quick testing
                             reachEngine.addEdge(lastGID, thisGID);
@@ -244,7 +248,7 @@ public class ConstraintsBuildEngine {
                 {
                     long thisGID = nonMemNodes.get(i).getGID();
                     String thisVar = makeVariable(thisGID);
-                    CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(thisVar).append("))\n");
+                    CONS_ASSERT_PO.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + lastVar + " " + thisVar + " )"));
 
                     //the order is added to reachability engine for quick testing
                     reachEngine.addEdge(lastGID, thisGID);
@@ -278,7 +282,8 @@ public class ConstraintsBuildEngine {
                         long nodeGID = nodes.get(j).getGID();
                         String nodeVar = makeVariable(nodeGID);
 
-                        CONS_ASSERT_PO.append("(assert (< ").append(nodeVar).append(" ").append(curVar).append("))\n");
+//                        CONS_ASSERT_PO.append("(assert (< ").append(nodeVar).append(" ").append(curVar).append("))\n");
+                        CONS_ASSERT_PO.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + nodeVar + " " + curVar + " )"));
 
                         //the order is added to reachability engine for quick testing
                         reachEngine.addEdge(nodeGID, curGID);
@@ -299,7 +304,8 @@ public class ConstraintsBuildEngine {
                         long nodeGID = nodes.get(j).getGID();
                         String nodeVar = makeVariable(nodeGID);
 
-                        CONS_ASSERT_PO.append("(assert (< ").append(curVar).append(" ").append(nodeVar).append("))\n");
+//                        CONS_ASSERT_PO.append("(assert (< ").append(curVar).append(" ").append(nodeVar).append("))\n");
+                        CONS_ASSERT_PO.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + curVar + " " + nodeVar + " )"));
 
                         //the order is added to reachability engine for quick testing
                         reachEngine.addEdge(curGID, nodeGID);
@@ -328,7 +334,8 @@ public class ConstraintsBuildEngine {
                             if (depNodes.contains(nodes.get(j))) {
                                 long thisGID = nodes.get(j).getGID();
                                 String thisVar = makeVariable(thisGID);
-                                CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(thisVar).append("))\n");
+//                                CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(thisVar).append("))\n");
+                                CONS_ASSERT_PO.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + lastVar + " " + thisVar + " )"));
 
                                 //the order is added to reachability engine for quick testing
                                 reachEngine.addEdge(lastGID, thisGID);
@@ -387,7 +394,8 @@ public class ConstraintsBuildEngine {
                                     long nodeGID = aNodesSet.getGID();
                                     String nodeVar = makeVariable(nodeGID);
 
-                                    CONS_ASSERT_VALID.append("(assert (< ").append(var).append(" ").append(nodeVar).append("))\n");
+//                                    CONS_ASSERT_VALID.append("(assert (< ").append(var).append(" ").append(nodeVar).append("))\n");
+                                    CONS_ASSERT_VALID.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + var + " " + nodeVar + " )"));
 
                                     reachEngine.addEdge(thisGID, nodeGID);
                                 }
@@ -401,7 +409,8 @@ public class ConstraintsBuildEngine {
                                 String fvar = makeVariable(fGID);
 
                                 //start-begin ordering
-                                CONS_ASSERT_VALID.append("(assert (< ").append(var).append(" ").append(fvar).append("))\n");
+//                                CONS_ASSERT_VALID.append("(assert (< ").append(var).append(" ").append(fvar).append("))\n");
+                                CONS_ASSERT_VALID.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + var + " " + fvar + " )"));
 
                                 reachEngine.addEdge(thisGID, fGID);
 
@@ -425,7 +434,8 @@ public class ConstraintsBuildEngine {
                                         long nodeGID = aNodesSet.getGID();
                                         String nodeVar = makeVariable(nodeGID);
 
-                                        CONS_ASSERT_VALID.append("(assert (< ").append(nodeVar).append(" ").append(var).append("))\n");
+//                                        CONS_ASSERT_VALID.append("(assert (< ").append(nodeVar).append(" ").append(var).append("))\n");
+                                        CONS_ASSERT_VALID.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + nodeVar + " " + var + " )"));
 
                                         reachEngine.addEdge(nodeGID, thisGID);
                                     }
@@ -441,7 +451,7 @@ public class ConstraintsBuildEngine {
                                 String lvar = makeVariable(lGID);
 
                                 //end-join ordering
-                                CONS_ASSERT_VALID.append("(assert (< ").append(lvar).append(" ").append(var).append("))\n");
+                                CONS_ASSERT_VALID.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + lvar + " " + var + " )"));
                                 reachEngine.addEdge(lGID, thisGID);
 
                             }
@@ -540,16 +550,16 @@ public class ConstraintsBuildEngine {
                         //lp1_b==null, lp2_a=null
                         if (lp1.unlock == null || lp2.lock == null) {
 //                            cons_b = "(> " + var_lp1_a + " " + var_lp2_b + ")";
-                            cons_b = "(< " + var_lp2_b + " " + var_lp1_a + ")";
+                            cons_b = "(< " + var_lp2_b + " " + var_lp1_a + " )";
                             //the trace may not be well-formed due to segmentation
                             if (lp1.lock.getGID() < lp2.unlock.getGID()) cons_b = "";
                         } else {
 //                            cons_b = "(or (> " + var_lp1_a + " " + var_lp2_b + ") (> " + var_lp2_a + " " + var_lp1_b + ") )";
-                            cons_b = "(or (< " + var_lp2_b + " " + var_lp1_a + ") (< " + var_lp1_b + " " + var_lp2_a + ") )";
+                            cons_b = "(or (< " + var_lp2_b + " " + var_lp1_a + " ) (< " + var_lp1_b + " " + var_lp2_a + " ) )";
                         }
                         if (!cons_b.isEmpty())
-                            CONS_ASSERT_VALID.append("(assert " + cons_b + ")\n");
-
+                            CONS_ASSERT_VALID.append(MatchUnsatModel.getInstance().namedComplexAssert(cons_b));
+//                            CONS_ASSERT_VALID.append("(assert " + cons_b + " )\n");
                     }
                 }
                 lastLockPairMap.put(lp1.lock.getTid(), lp1);
@@ -769,7 +779,7 @@ public class ConstraintsBuildEngine {
                         if (!canReach(wnode2, wnode1) && !canReach(rnode, wnode2) && depNodes.contains(wnode2)) {
                             String var_w2 = makeVariable(wnode2.getGID());
                             if (last_cons_d != null) {
-                                cons_c += "(and " + last_cons_d;
+                                cons_c += "(and " + last_cons_d + " ";
                                 cons_c_end += " ) ";
 
                             }
@@ -821,7 +831,7 @@ public class ConstraintsBuildEngine {
 
 
                     if (j + 1 < writenodes_value_match.size()) {
-                        cons_b += "(or " + cons_b_;
+                        cons_b += "(or " + cons_b_ + " ";
                         cons_b_end += " ) ";
 
                         //cons_a+= "(and (> "+var_w1+" "+var_r+")\n";
@@ -836,7 +846,7 @@ public class ConstraintsBuildEngine {
 
                 if (cons_b.length() > 0) {
                     Configuration.rwConstraints += 1;
-                    CONS_CAUSAL_RW = " (and " + cons_b + " " + CONS_CAUSAL_RW + " ) ";
+                    CONS_CAUSAL_RW = "(and " + cons_b + " " + CONS_CAUSAL_RW + " ) ";
                 }
 
             }// end if can't match the inital value
@@ -868,7 +878,7 @@ public class ConstraintsBuildEngine {
                     continue;
                 String var2 = makeVariable(node2.getGID());
 
-                CONS_ASSERT_VALID.append("(assert (< ").append(var2).append(" ").append(var1).append(" ))\n");
+                CONS_ASSERT_VALID.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + var2 + " " + var1 + " )"));
             }
         }
 
@@ -970,7 +980,8 @@ public class ConstraintsBuildEngine {
                                 cons_b = "(or (< " + var_lp2_b + " " + var_lp1_a + " ) (< " + var_lp1_b + " " + var_lp2_a + " ) )";
                             }
                             if (!cons_b.isEmpty())
-                                CONS_ASSERT_VALID.append("(assert " + cons_b + " )\n");
+//                                CONS_ASSERT_VALID.append("(assert " + cons_b + " )\n");
+                                CONS_ASSERT_VALID.append(MatchUnsatModel.getInstance().namedComplexAssert(cons_b));
 
                         }
                     }
@@ -1002,7 +1013,8 @@ public class ConstraintsBuildEngine {
                     String lastVar = makeVariable(lastGID);
                     long thisGID = thisNode.getGID();
                     String var = makeVariable(thisGID);
-                    CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(var).append(" ))\n");
+//                    CONS_ASSERT_PO.append("(assert (< ").append(lastVar).append(" ").append(var).append(" ))\n");
+                    CONS_ASSERT_PO.append(MatchUnsatModel.getInstance().namedComplexAssert("(< " + lastVar + " " + var + " )"));
 
                     lastGID = thisGID;
                 } else
@@ -1070,7 +1082,8 @@ public class ConstraintsBuildEngine {
         }
 
 
-        return new StringBuilder("(assert " + CONS_CAUSAL_RW + ")\n\n");
+//        return new StringBuilder("(assert " + CONS_CAUSAL_RW + ")\n\n");
+        return MatchUnsatModel.getInstance().namedComplexAssert(CONS_CAUSAL_RW).append("\n");
 
     }
 
@@ -1088,7 +1101,7 @@ public class ConstraintsBuildEngine {
                 String var_w2 = makeVariable(wnode2.getGID());
 
                 if (last_cons_d != null) {
-                    cons_c += "(and " + last_cons_d;
+                    cons_c += "(and " + last_cons_d + " ";
                     cons_c_end += " ) ";
 
                 }
@@ -1101,8 +1114,12 @@ public class ConstraintsBuildEngine {
         }
         cons_c = cons_c + cons_c_end;
 
-        if (cons_c.length() > 0)
-            CONS_CAUSAL_RW.append("(assert " + cons_c + " )\n\n");
+//        if (cons_c.length() > 0)
+//            CONS_CAUSAL_RW.append("(assert " + cons_c + " )\n\n");
+        if (cons_c.length() > 0) {
+            CONS_CAUSAL_RW.append(MatchUnsatModel.getInstance().namedComplexAssert(cons_c));
+            CONS_CAUSAL_RW.append("\n");
+        }
 
         return CONS_CAUSAL_RW;
 
@@ -1135,7 +1152,7 @@ public class ConstraintsBuildEngine {
                 String var_w2 = makeVariable(wnode2.getGID());
 
                 if (last_cons_d != null) {
-                    cons_c += "(and " + last_cons_d;
+                    cons_c += "(and " + last_cons_d + " ";
                     cons_c_end += " ) ";
 
                 }
@@ -1156,7 +1173,9 @@ public class ConstraintsBuildEngine {
         if (cons_c.length() > 0)
             cons_b_ = "(and " + cons_b_ + " " + cons_c + " ) ";
 
-        CONS_CAUSAL_RW.append("(assert " + cons_b_ + " )\n\n");
+//        CONS_CAUSAL_RW.append("(assert " + cons_b_ + " )\n\n");
+        CONS_CAUSAL_RW.append(MatchUnsatModel.getInstance().namedComplexAssert(cons_b_));
+        CONS_CAUSAL_RW.append("\n");
         return CONS_CAUSAL_RW;
     }
 

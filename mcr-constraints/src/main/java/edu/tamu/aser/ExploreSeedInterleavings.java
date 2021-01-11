@@ -1,18 +1,15 @@
 package edu.tamu.aser;
+
+import edu.tamu.aser.accelerate.MatchUnsatModel;
+import edu.tamu.aser.config.Configuration;
+import edu.tamu.aser.constraints.ConstraintsBuildEngine;
+import edu.tamu.aser.trace.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.*;
 import java.util.Map.Entry;
-import edu.tamu.aser.config.Configuration;
-import edu.tamu.aser.constraints.ConstraintsBuildEngine;
-import edu.tamu.aser.trace.AbstractNode;
-import edu.tamu.aser.trace.IMemNode;
-import edu.tamu.aser.trace.LockNode;
-import edu.tamu.aser.trace.ReadNode;
-import edu.tamu.aser.trace.Trace;
-import edu.tamu.aser.trace.UnlockNode;
-import edu.tamu.aser.trace.WriteNode;
 
 /**
  * The MCRTest class implements maximal causal model based systematic
@@ -230,23 +227,25 @@ public class ExploreSeedInterleavings {
 		//OMCR
 		HashMap<String, Set<Vector<String>>> mValuePrefix = new HashMap<>();
 		Set<Vector<String>> prefix = new HashSet<Vector<String>>();
-		
-		if(isfulltrace && schedule_prefix.size()>0)
+
+		if (isfulltrace && schedule_prefix.size() > 0)
 			depNodes.addAll(trace.getFullTrace().subList(0, schedule_prefix.size()));
-		
-		
+
+
 		depNodes.add(rnode);
 		readDepNodes.add(rnode);
 
-        StringBuilder sb;
-        sb = engine.constructFeasibilityConstraints(trace,depNodes,readDepNodes, rnode, null);
-        StringBuilder sb2;
-        sb2 = engine.constructReadInitWriteConstraints(rnode,depNodes, writenodes);
+		MatchUnsatModel.getInstance().init();
 
-        sb.append(sb2);
+		StringBuilder sb;
+		sb = engine.constructFeasibilityConstraints(trace, depNodes, readDepNodes, rnode, null);
+		StringBuilder sb2;
+		sb2 = engine.constructReadInitWriteConstraints(rnode, depNodes, writenodes);
+
+		sb.append(sb2);
 		//@alan
 		//adding rnode.getGid() as a parameter
-		Vector<String> schedule = engine.generateSchedule(sb,rnode.getGID(),rnode.getGID(),isfulltrace?schedule_prefix.size():0);
+		Vector<String> schedule = engine.generateSchedule(sb, rnode.getGID(), rnode.getGID(), isfulltrace ? schedule_prefix.size() : 0);
 		
 		output = output + Configuration.numReads + " " +
 				Configuration.rwConstraints + " " +
@@ -325,22 +324,24 @@ public class ExploreSeedInterleavings {
 					 * it just needs to ignore the feasibility constraints of these reads
 					 * @author Alan
 					 */
-                    HashSet<AbstractNode> nodes1 = engine.getDependentNodes(trace, rnode);
-                    HashSet<AbstractNode> nodes2 = engine.getDependentNodes(trace, wnode);
+					HashSet<AbstractNode> nodes1 = engine.getDependentNodes(trace, rnode);
+					HashSet<AbstractNode> nodes2 = engine.getDependentNodes(trace, wnode);
 
-                    depNodes.addAll(nodes1);
-                    depNodes.addAll(nodes2);
+					depNodes.addAll(nodes1);
+					depNodes.addAll(nodes2);
 
-                    readDepNodes.addAll(nodes1);
+					readDepNodes.addAll(nodes1);
 
-                    //construct feasibility constraints
-                    StringBuilder sb =
-                            engine.constructFeasibilityConstraints(trace, depNodes, readDepNodes, rnode, wnode);
+					MatchUnsatModel.getInstance().init();
 
-                    //construct read write constraints, namely, all other writes either happen before the Write
-                    //or after the Read.
-                    StringBuilder sb3 =
-                            engine.constructReadWriteConstraints(depNodes, rnode, wnode, otherWriteNodes);
+					//construct feasibility constraints
+					StringBuilder sb =
+							engine.constructFeasibilityConstraints(trace, depNodes, readDepNodes, rnode, wnode);
+
+					//construct read write constraints, namely, all other writes either happen before the Write
+					//or after the Read.
+					StringBuilder sb3 =
+							engine.constructReadWriteConstraints(depNodes, rnode, wnode, otherWriteNodes);
 
                     sb.append(sb3);
 

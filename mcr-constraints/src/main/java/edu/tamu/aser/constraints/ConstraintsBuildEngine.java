@@ -29,7 +29,8 @@ public class ConstraintsBuildEngine {
     private StringBuilder CONS_DECLARE;
     private StringBuilder CONS_ASSERT_PO;
     private StringBuilder CONS_ASSERT_VALID;
-    private final StringBuilder CONS_GETMODEL = new StringBuilder("(check-sat)\n(get-model)\n(exit)");
+    //    private final StringBuilder CONS_GETMODEL = new StringBuilder("(check-sat)\n(get-model)\n(exit)");
+    private final StringBuilder CONS_GETMODEL = new StringBuilder("(check-sat)\n(get-model)\n(get-unsat-core)\n(exit)");
 
     protected AtomicInteger id = new AtomicInteger();//constraint id
     protected Configuration config;
@@ -538,11 +539,13 @@ public class ConstraintsBuildEngine {
 
                         //lp1_b==null, lp2_a=null
                         if (lp1.unlock == null || lp2.lock == null) {
-                            cons_b = "(> " + var_lp1_a + " " + var_lp2_b + ")";
+//                            cons_b = "(> " + var_lp1_a + " " + var_lp2_b + ")";
+                            cons_b = "(< " + var_lp2_b + " " + var_lp1_a + ")";
                             //the trace may not be well-formed due to segmentation
                             if (lp1.lock.getGID() < lp2.unlock.getGID()) cons_b = "";
                         } else {
-                            cons_b = "(or (> " + var_lp1_a + " " + var_lp2_b + ") (> " + var_lp2_a + " " + var_lp1_b + ") )";
+//                            cons_b = "(or (> " + var_lp1_a + " " + var_lp2_b + ") (> " + var_lp2_a + " " + var_lp1_b + ") )";
+                            cons_b = "(or (< " + var_lp2_b + " " + var_lp1_a + ") (< " + var_lp1_b + " " + var_lp2_a + ") )";
                         }
                         if (!cons_b.isEmpty())
                             CONS_ASSERT_VALID.append("(assert " + cons_b + ")\n");
@@ -695,7 +698,7 @@ public class ConstraintsBuildEngine {
                     for (WriteNode wnode3 : writenodes_other) {
                         if (wnode3.getTid() != rnode.getTid() && !canReach(rnode, wnode3) && depNodes.contains(wnode3)) {
                             String var_w3 = makeVariable(wnode3.getGID());
-                            String cons_e = "(> " + var_w3 + " " + var_r + " )";
+                            String cons_e = "(< " + var_r + " " + var_w3 + " )";
                             Configuration.rwConstraints += 1;
                             cons_init = "(and " + cons_e + " " + cons_init + " )";
                         }
@@ -724,7 +727,7 @@ public class ConstraintsBuildEngine {
                     WriteNode wnode1 = writenodes_value_match.get(j);
                     String var_w1 = makeVariable(wnode1.getGID());
 
-                    String cons_b_ = "(> " + var_r + " " + var_w1 + " )";
+                    String cons_b_ = "(< " + var_w1 + " " + var_r + " )";
 
                     Configuration.rwConstraints += 1;
 
@@ -797,13 +800,13 @@ public class ConstraintsBuildEngine {
 
                             if (cons_w2node.length() > 0) {
                                 last_cons_d =
-                                        "(or (> " + var_w2 + " " + var_r + " ) " +
-                                                "(and (> " + var_w1 + " " + var_w2 + " ) "
+                                        "(or (< " + var_r + " " + var_w2 + " ) " +
+                                                "(and (< " + var_w2 + " " + var_w1 + " ) "
                                                 + cons_w2node + " ) )";
                             } else {
                                 last_cons_d =
-                                        "(or (> " + var_w2 + " " + var_r + " )" +
-                                                " (> " + var_w1 + " " + var_w2 + " ) )";
+                                        "(or (< " + var_r + " " + var_w2 + " )" +
+                                                " (< " + var_w2 + " " + var_w1 + " ) )";
                             }
 
                         }
@@ -959,11 +962,12 @@ public class ConstraintsBuildEngine {
 
                             //lp1_b==null, lp2_a=null
                             if (lp1.unlock == null || lp2.lock == null) {
-                                cons_b = "(> " + var_lp1_a + " " + var_lp2_b + " )";
+//                                cons_b = "(> " + var_lp1_a + " " + var_lp2_b + " )";
+                                cons_b = "(< " + var_lp2_b + " " + var_lp1_a + " )";
                                 //the trace may not be well-formed due to segmentation
                                 if (lp1.lock.getGID() < lp2.unlock.getGID()) cons_b = "";
                             } else {
-                                cons_b = "(or (> " + var_lp1_a + " " + var_lp2_b + " ) (> " + var_lp2_a + " " + var_lp1_b + " ) )";
+                                cons_b = "(or (< " + var_lp2_b + " " + var_lp1_a + " ) (< " + var_lp1_b + " " + var_lp2_a + " ) )";
                             }
                             if (!cons_b.isEmpty())
                                 CONS_ASSERT_VALID.append("(assert " + cons_b + " )\n");
@@ -1088,7 +1092,7 @@ public class ConstraintsBuildEngine {
                     cons_c_end += " ) ";
 
                 }
-                last_cons_d = "(> " + var_w2 + " " + var_r + " ) ";
+                last_cons_d = "(< " + var_r + " " + var_w2 + " ) ";
             }
         }
 
@@ -1119,7 +1123,7 @@ public class ConstraintsBuildEngine {
         String var_w1 = makeVariable(wnode.getGID());
         String var_r = makeVariable(rnode.getGID());
 
-        String cons_b_ = "(> " + var_r + " " + var_w1 + " )";
+        String cons_b_ = "(< " + var_w1 + " " + var_r + " )";
         String cons_c = "";
         String cons_c_end = "";
         String last_cons_d = null;
@@ -1137,9 +1141,9 @@ public class ConstraintsBuildEngine {
                 }
 
                 //add constraints for the feasibility of var_w2 when it is before var_w1
-                String cons_sb = "(> " + var_w1 + " " + var_w2 + " )";
+                String cons_sb = "(< " + var_w2 + " " + var_w1 + " )";
                 last_cons_d =
-                        "(or (> " + var_w2 + " " + var_r + " ) " +
+                        "(or (< " + var_r + " " + var_w2 + " ) " +
                                 cons_sb + " ) ";
             }
         }
@@ -1178,7 +1182,8 @@ public class ConstraintsBuildEngine {
 //		declareVariables(CONS_ASSERT_PO.append(causalConstraint).append(CONS_ASSERT_VALID));
         declareVariables(new StringBuilder("").append(CONS_ASSERT_PO).append(causalConstraint).append(CONS_ASSERT_VALID));
 
-        String CONS_SETLOGIC = "(set-logic QF_IDL)\n";
+//        String CONS_SETLOGIC = "(set-logic QF_IDL)\n";
+        String CONS_SETLOGIC = "(set-option :produce-unsat-cores true)\n(set-logic QF_IDL)\n";
         task.sendMessage(CONS_SETLOGIC + CONS_DECLARE + CONS_ASSERT_VALID + CONS_ASSERT_PO + causalConstraint + CONS_GETMODEL, makeVariable(gid), makeVariable(wgid), makeVariable(gid_prefix), reachEngine, causalConstraint.toString(), config);
 
         return task.schedule;

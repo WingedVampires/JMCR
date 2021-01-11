@@ -25,23 +25,6 @@ public class MatchUnsatModel {
         return instance;
     }
 
-    public static void main(String[] args) {
-        String line = "(and (< x10 x18 )  (and  (or (< x18 x13 ) (< x13 x10 ) ) (or (< x18 x5 ) (< x5 x10 ) ) ) )";
-
-        AssertDetailInfo assertDetailInfo = AssertDetailInfo.getAssertDetailInfo(line);
-        System.out.println(MatchUnsatModel.getInstance().namedComplexAssert(line));
-        System.out.println();
-        for (ArrayList<String> list : MatchUnsatModel.getInstance().curAllConditionsList) {
-            for (String s : list) System.out.print(s + " ");
-            System.out.println();
-
-        }
-        System.out.println();
-        MatchUnsatModel.getInstance().addUnsatCore("A0 A1 A4");
-        for (String s : MatchUnsatModel.getInstance().unsatSet) System.out.println(s);
-
-    }
-
     /**
      * 每此约束求解前初始化之前trace的所有记录的命名（z3语法要求）和所有条件的可能组合
      */

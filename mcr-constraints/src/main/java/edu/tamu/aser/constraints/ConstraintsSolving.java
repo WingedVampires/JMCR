@@ -1,6 +1,11 @@
 
 package edu.tamu.aser.constraints;
 
+import edu.tamu.aser.config.Configuration;
+import edu.tamu.aser.config.Util;
+import edu.tamu.aser.graph.ReachabilityEngine;
+import org.w3c.tools.sexpr.SimpleSExprStream;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -8,12 +13,6 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
-
-import edu.tamu.aser.graph.ReachabilityEngine;
-import edu.tamu.aser.config.Configuration;
-import org.w3c.tools.sexpr.SimpleSExprStream;
-
-import edu.tamu.aser.config.Util;
 
 /**
  * Constraint solving with Z3 solver
@@ -177,19 +176,18 @@ public class ConstraintsSolving
 	        exec(outFile, smtFile.getAbsolutePath());
 
 	        model = GetModel.read(outFile);
-	        
-	        if(model!=null)
-	        {
-	        	sat = true;
-	        	schedule = computeSchedule(model,endVar, wVar, endVar_prefix, reachEngine, causalConstraint);
-	        }
-	        //String z3OutFileName = z3OutFile.getAbsolutePath();
-	        //retrieveResult(z3OutFileName);
-	        
-	        //delete files
-	        Files.delete(outFile.toPath());
-	        Files.delete(smtFile.toPath());
-	        
+
+			if (model != null) {
+				sat = true;
+				schedule = computeSchedule(model, endVar, wVar, endVar_prefix, reachEngine, causalConstraint);
+			}
+			//String z3OutFileName = z3OutFile.getAbsolutePath();
+			//retrieveResult(z3OutFileName);
+
+			//delete files
+//	        Files.delete(outFile.toPath());
+//	        Files.delete(smtFile.toPath());
+
 		}catch(IOException e)
 		{
 			System.err.println(e.getMessage());

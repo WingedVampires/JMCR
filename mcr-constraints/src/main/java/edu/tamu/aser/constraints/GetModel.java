@@ -142,7 +142,7 @@ public class GetModel {
 		for (int i = 1; i < size; i++) {
 			// 当检测到返回Ax的Bool值时停止扫描
 			if (((Vector) root.elementAt(i)).elementAt(1).toString().contains("A"))
-				continue;
+				break;
 
 			define_fun(root.elementAt(i), model);
 		}

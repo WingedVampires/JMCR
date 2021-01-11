@@ -33,7 +33,18 @@ public class MatchUnsatModel {
         curAllConditionsList.clear();
     }
 
-    //
+    public void printInfo() {
+        System.out.println("所有可能条件：\n");
+        for (String s : getAssertsAllPossibleCondition(curAllConditionsList))
+            System.out.println(s);
+
+        System.out.println("所有unsat-core：\n");
+
+        for (String s : unsatSet)
+            System.out.println(s);
+
+        System.out.println();
+    }
 
     /**
      * 添加unsat-core
@@ -58,6 +69,7 @@ public class MatchUnsatModel {
      * @return true表示需要进行z3求解
      */
     public boolean checkTraceUnsat() {
+        int index = 0;
         // 计算当前trace的条件的所有组合
         ArrayList<String> traceAllPossibleCondition = getAssertsAllPossibleCondition(curAllConditionsList);
 
@@ -78,11 +90,12 @@ public class MatchUnsatModel {
 
                 //isSat值不变代表当前条件包含当前unsat-core的所有内容，即当前条件unsat，可以从trace的所有条件中删除当前条件
                 if (!isSat)
-                    traceAllPossibleCondition.remove(traceCondition);
+                    index++;//traceAllPossibleCondition.remove(traceCondition);
             }
         }
 
-        return !traceAllPossibleCondition.isEmpty();
+//        return !traceAllPossibleCondition.isEmpty();
+        return index != traceAllPossibleCondition.size();
     }
 
     // 获得assert的命名

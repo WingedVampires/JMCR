@@ -1198,13 +1198,15 @@ public class ConstraintsBuildEngine {
          * I will declare the constraints variables here
          * for all the varaibles that appear in the constraints
          */
-//		declareVariables(CONS_ASSERT_PO.append(causalConstraint).append(CONS_ASSERT_VALID));
-        declareVariables(new StringBuilder("").append(CONS_ASSERT_PO).append(causalConstraint).append(CONS_ASSERT_VALID));
+        //根据历史unsat-core判断是否需要进行z3约束求解
+        if (MatchUnsatModel.getInstance().checkTraceUnsat()) {
+//            declareVariables(CONS_ASSERT_PO.append(causalConstraint).append(CONS_ASSERT_VALID));
+            declareVariables(new StringBuilder("").append(CONS_ASSERT_PO).append(causalConstraint).append(CONS_ASSERT_VALID));
 
 //        String CONS_SETLOGIC = "(set-logic QF_IDL)\n";
-        String CONS_SETLOGIC = "(set-option :produce-unsat-cores true)\n(set-logic QF_IDL)\n";
-        task.sendMessage(CONS_SETLOGIC + CONS_DECLARE + CONS_ASSERT_VALID + CONS_ASSERT_PO + causalConstraint + CONS_GETMODEL, makeVariable(gid), makeVariable(wgid), makeVariable(gid_prefix), reachEngine, causalConstraint.toString(), config);
-
+            String CONS_SETLOGIC = "(set-option :produce-unsat-cores true)\n(set-logic QF_IDL)\n";
+            task.sendMessage(CONS_SETLOGIC + CONS_DECLARE + CONS_ASSERT_VALID + CONS_ASSERT_PO + causalConstraint + CONS_GETMODEL, makeVariable(gid), makeVariable(wgid), makeVariable(gid_prefix), reachEngine, causalConstraint.toString(), config);
+        }
         return task.schedule;
     }
 

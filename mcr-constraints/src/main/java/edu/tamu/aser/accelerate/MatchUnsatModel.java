@@ -17,6 +17,10 @@ public class MatchUnsatModel {
     private long index = 0L;
     private int time = 1;
 
+
+    public static long smtNum = 0;
+    public static long jumpNum = 0;
+
     public static MatchUnsatModel getInstance() {
         if (instance == null) {
             instance = new MatchUnsatModel();
@@ -89,8 +93,11 @@ public class MatchUnsatModel {
                 }
 
                 //isSat值不变代表当前条件包含当前unsat-core的所有内容，即当前条件unsat，可以从trace的所有条件中删除当前条件
-                if (!isSat)
+                if (!isSat) {
                     index++;//traceAllPossibleCondition.remove(traceCondition);
+                    break;
+                }
+
             }
         }
 

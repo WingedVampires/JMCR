@@ -16,7 +16,7 @@ import java.util.Map.Entry;
 
 /**
  * Constraint solving with Z3 solver
- * 
+ *
  * @author jeffhuang
  *
  */
@@ -31,46 +31,66 @@ public class ConstraintsSolving
 	
 	private Model model;
 	public Vector<String> schedule;
-		
+
 	private boolean sat;
 
     private long timeout;
-	
-	public ConstraintsSolving(Configuration config, int id)
-	{				
-		try{
-			init(config,id);
-		
-		}catch(IOException e)
-		{
+
+	public ConstraintsSolving(Configuration config, int id) {
+		try {
+			init(config, id);
+
+		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
 	}
+
+	/**
+	 * sort the map by the value
+	 */
+	private static <K, V extends Comparable<? super V>> Map<K, V>
+	sortByValue(Map<K, V> map) {
+		List<Map.Entry<K, V>> list =
+				new LinkedList<>(map.entrySet());
+		Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
+			@Override
+			public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
+				return (o2.getValue()).compareTo(o1.getValue());
+			}
+		});
+
+		Map<K, V> result = new LinkedHashMap<>();
+		for (Map.Entry<K, V> entry : list) {
+			result.put(entry.getKey(), entry.getValue());
+		}
+		return result;
+	}
+
 	/**
 	 * initialize solver configuration
+	 *
 	 * @param config
 	 * @param id
 	 * @throws IOException
 	 */
-	public void init(Configuration config, int id) throws IOException
-	{
+	public void init(Configuration config, int id) throws IOException {
 		String SMT = ".smt";
 		if(Configuration.Optimize){
 			smtFile = Util.newOutFile(config.constraint_outdir,config.tableName +"_opt" +"_"+id+ SMT);
-	        
+
 			outFile = Util.newOutFile(config.constraint_outdir,config.tableName +"_opt" +"_"+id+OUT);
 		}
 		else{
 			smtFile = Util.newOutFile(config.constraint_outdir,config.tableName +"_"+id+ SMT);
-	        
+
 			outFile = Util.newOutFile(config.constraint_outdir,config.tableName +"_"+id+OUT);
 		}
-		
+
 
         String[] quotes = config.smt_solver.split(" ");
         boolean inQuote = false;
         CMD = new ArrayList<>();
-        
+
 //        if (OS.indexOf("mac") >= 0) {
 //        	Z3_PATH = "../z3-osx/bin/z3";
 //		} else {
@@ -78,14 +98,14 @@ public class ConstraintsSolving
 //		}
 		//let the users to install z3
 		String z3_PATH = "z3";
-        
+
         CMD.add(z3_PATH);
         for(String arg: quotes){
         	CMD.add(arg);
         }
         timeout = config.solver_timeout;
 	}
-	
+
 	/**
 	 * solve constraint "msg"
 	 * @param msg
@@ -97,30 +117,30 @@ public class ConstraintsSolving
 			smtWriter = Util.newWriter(smtFile, true);
 			smtWriter.println(msg);
 		    smtWriter.close();
-		    
+
 		    //invoke the solver
 	        exec(outFile, smtFile.getAbsolutePath());
 
 	        model = GetModel.read(outFile);
-	        
-	        if(model!=null)
-	        {
-	        	sat = true;
-	        	//schedule = computeSchedule(model);
-	        }
-	        //String z3OutFileName = z3OutFile.getAbsolutePath();
-	        //retrieveResult(z3OutFileName);
-		    
-	        //delete files
-//	        Files.delete(outFile.toPath());
-//	        Files.delete(smtFile.toPath());
-	        
+
+			if (model != null) {
+				sat = true;
+				//schedule = computeSchedule(model);
+			}
+			//String z3OutFileName = z3OutFile.getAbsolutePath();
+			//retrieveResult(z3OutFileName);
+
+			//delete files
+			Files.delete(outFile.toPath());
+			Files.delete(smtFile.toPath());
+
 		}catch(IOException e)
 		{
 			System.err.println(e.getMessage());
 
 		}
 	}
+
 	public boolean isSatisfiable(String msg)
 	{
 		PrintWriter smtWriter = null;
@@ -128,7 +148,7 @@ public class ConstraintsSolving
 			smtWriter = Util.newWriter(smtFile, true);
 			smtWriter.println(msg);
 		    smtWriter.close();
-		    
+
 		    //invoke the solver
 	        exec(outFile, smtFile.getAbsolutePath());
 
@@ -149,13 +169,13 @@ public class ConstraintsSolving
 			Files.delete(smtFile.toPath());
 
 			return isSatisfied;
-		    
+
 		}catch(Exception e)
 		{
 			System.err.println(e.getMessage());
 
 		}
-		
+
 		return false;
 	}
 
@@ -171,11 +191,11 @@ public class ConstraintsSolving
 			smtWriter = Util.newWriter(smtFile, true);
 		  	smtWriter.println(msg);
 		    smtWriter.close();
-		    
+
 		    //invoke the solver
 	        exec(outFile, smtFile.getAbsolutePath());
 
-	        model = GetModel.read(outFile);
+			model = GetModel.read(outFile);
 
 			if (model != null) {
 				sat = true;
@@ -185,8 +205,8 @@ public class ConstraintsSolving
 			//retrieveResult(z3OutFileName);
 
 			//delete files
-//	        Files.delete(outFile.toPath());
-//	        Files.delete(smtFile.toPath());
+			Files.delete(outFile.toPath());
+			Files.delete(smtFile.toPath());
 
 		}catch(IOException e)
 		{
@@ -194,10 +214,11 @@ public class ConstraintsSolving
 
 		}
 	}
+
 	/**
 	 * Given the model of solution, return the corresponding schedule
-	 * 
-	 * @param model: 
+	 *
+	 * @param model:
 	 * @param endVar_prefix: the last schedule point that must be included
 	 * @return
 	 */
@@ -208,18 +229,18 @@ public class ConstraintsSolving
             String endVar_prefix,
             ReachabilityEngine reachEngine,
             String causalConstraint) {
-		
+
 		//Alan
 		String constraint[] = causalConstraint.split("\n");
 		long gidEndVar = Integer.parseInt(endVar.substring(1));
-		
+
 		Vector<String> schedule = new Vector<String>();
 		//add endVar
 		schedule.add(endVar);
-		
+
 		//no constraint -- just endVar in the schedule
 		if(model.getMap().isEmpty())return schedule;
-		
+
 		//what if end var has no relationship with other nodes
 		//in the depNodes? then the solution will not include this var
 		//then get(endVar) will return null
@@ -229,38 +250,38 @@ public class ConstraintsSolving
 		if(model.getMap().get(endVar) != null){
 			endValue = (Integer) model.getMap().get(endVar);
 		}
-		else{
+		else {
 			endValue = -100;
 		}
-		
-		
+
+
 		int VALUE = endValue;
-		
+
 		if(!endVar_prefix.equals("x0"))
 		{
 		schedule.add(endVar_prefix);
 
 		int endValue_prefix = (Integer) model.getMap().get(endVar_prefix);
-		
+
 		if(VALUE<endValue_prefix)
 			VALUE = endValue_prefix;
 		}
-		
+
 		//it is super hard to build prefix under TSO or PSO
 		//since it is difficult to make it shortest
-		
+
 		Map<String, Object> map = model.getMap();
 		Map<String, Integer> newMap = new HashMap<String, Integer>();
 		for(String key: map.keySet()){
 			int value = (Integer)map.get(key);
 			newMap.put(key, value);
-			
+
 		}
 		//decreasing
 		Map<String, Integer> sortedMap = sortByValue(newMap);
-		
+
 //		Iterator<Entry<String,Object>> setIt = model.getMap().entrySet().iterator();
-		
+
 		Set<Entry<String, Integer>> entrySet = sortedMap.entrySet();
 
         for (Entry<String, Integer> entryModel : entrySet) {
@@ -314,7 +335,7 @@ public class ConstraintsSolving
         }
 		return schedule;
 	}
-	
+
 	private void exec(final File outFile, String file) throws IOException
 	{
 
@@ -339,41 +360,16 @@ public class ConstraintsSolving
 			e.printStackTrace();
 			System.exit(-1);
 		}
-        
+
         try {
             process.waitFor();
         } catch (InterruptedException e) {
         	e.printStackTrace();
             process.destroy();
-            
+
         }
-    }
-	
-	/**
-	 *  sort the map by the value
-	 */
-	private static <K, V extends Comparable<? super V>> Map<K, V>
-    sortByValue(Map<K, V> map)
-	{
-	    List<Map.Entry<K, V>> list =
-	        new LinkedList<>( map.entrySet() );
-	    Collections.sort( list, new Comparator<Map.Entry<K, V>>()
-	    {
-	        @Override
-	        public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )
-	        {
-	            return (o2.getValue()).compareTo( o1.getValue() );
-	        }
-	    } );
-	
-	    Map<K, V> result = new LinkedHashMap<>();
-	    for (Map.Entry<K, V> entry : list)
-	    {
-	        result.put( entry.getKey(), entry.getValue() );
-	    }
-	    return result;
 	}
-	
+
 }
 
 

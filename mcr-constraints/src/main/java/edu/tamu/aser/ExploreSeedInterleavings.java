@@ -698,17 +698,17 @@ public class ExploreSeedInterleavings {
 		{
 			//engine is used for constructing constraints model
 			ConstraintsBuildEngine engine = getEngine(trace.getApplicationName());
-			
+
 			//pre-process the trace
 			//build the initial happen before relation for some optimization
 			engine.preprocess(trace);
-		
+
 			//generate causal prefixes
-			genereteCausallyDifferentSchedules(engine,trace,schedule_prefix);
-			
-		}		
+			genereteCausallyDifferentSchedules(engine, trace, schedule_prefix);
+
+			MatchUnsatModel.smtNum = engine.getId().get();
+		}
 	}
-	
 	//compute the memory used
 	static int memSize(Object o){
         try{

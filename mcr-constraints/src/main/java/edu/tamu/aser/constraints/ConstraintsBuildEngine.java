@@ -36,6 +36,9 @@ public class ConstraintsBuildEngine {
     protected AtomicInteger id = new AtomicInteger();//constraint id
     protected Configuration config;
 
+    public AtomicInteger getId() {
+        return id;
+    }
 
     public ConstraintsBuildEngine(Configuration config) {
         this.config = config;
@@ -1191,25 +1194,29 @@ public class ConstraintsBuildEngine {
      */
 
     public Vector<String> generateSchedule(StringBuilder causalConstraint, long gid, Long wgid, long gid_prefix) {
-        id.incrementAndGet();
-        ConstraintsSolving task = new ConstraintsSolving(config, id.get());
 
         /*
          * I will declare the constraints variables here
          * for all the varaibles that appear in the constraints
          */
         //根据历史unsat-core判断是否需要进行z3约束求解
-        if (MatchUnsatModel.getInstance().checkTraceUnsat()) {
+        if (MatchUnsatModel.getInstance().checkTraceUnsat_less_memory()) {
+            id.incrementAndGet();
+            ConstraintsSolving task = new ConstraintsSolving(config, id.get());
+
 //            declareVariables(CONS_ASSERT_PO.append(causalConstraint).append(CONS_ASSERT_VALID));
             declareVariables(new StringBuilder("").append(CONS_ASSERT_PO).append(causalConstraint).append(CONS_ASSERT_VALID));
 
 //        String CONS_SETLOGIC = "(set-logic QF_IDL)\n";
             String CONS_SETLOGIC = "(set-option :produce-unsat-cores true)\n(set-logic QF_IDL)\n";
             task.sendMessage(CONS_SETLOGIC + CONS_DECLARE + CONS_ASSERT_VALID + CONS_ASSERT_PO + causalConstraint + CONS_GETMODEL, makeVariable(gid), makeVariable(wgid), makeVariable(gid_prefix), reachEngine, causalConstraint.toString(), config);
-        }
-        return task.schedule;
-    }
 
+            return task.schedule;
+        } else {
+            MatchUnsatModel.jumpNum++;
+            return null;
+        }
+    }
 
     private Vector<ReadNode> getReadNodes(HashSet<AbstractNode> depNodes) {
         Vector<ReadNode> readnodes = new Vector<ReadNode>();

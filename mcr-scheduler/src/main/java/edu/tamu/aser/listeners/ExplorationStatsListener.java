@@ -1,16 +1,13 @@
 package edu.tamu.aser.listeners;
 
-import java.util.Calendar;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.Timer;
-import java.util.TimerTask;
-
+import edu.tamu.aser.accelerate.MatchUnsatModel;
 import edu.tamu.aser.instrumentation.MCRProperties;
 import edu.tamu.aser.runtime.RVRunTime;
 import edu.tamu.aser.scheduling.events.EventDesc;
 import edu.tamu.aser.scheduling.strategy.ChoiceType;
 import edu.tamu.aser.scheduling.strategy.ThreadInfo;
+
+import java.util.*;
 
 public class ExplorationStatsListener extends ExplorationListenerAdapter {
 
@@ -133,6 +130,8 @@ public class ExplorationStatsListener extends ExplorationListenerAdapter {
 //        System.out.println(NUMBER_OF_THREADS + numThreads);
 //        System.out.println(MAX_NUM_THREADS_IN_A_SCHEDULE + maxNumThreads);
         System.out.println(EXPLORATION_TIME + getDurationString(System.currentTimeMillis() - startTime));
+        System.out.println("SMT_FILE_NUMBER: " + MatchUnsatModel.smtNum);
+        System.out.println("JUMP_SMT_NUMBER: " + MatchUnsatModel.jumpNum);
         if (failureDetected) {
             System.out.println(FAILURE_DETECTED_MESSAGE);
         }
@@ -140,7 +139,7 @@ public class ExplorationStatsListener extends ExplorationListenerAdapter {
             System.out.println("A timeout has occurred after " + getDurationString(timeoutValue));
         }
         System.out.println(EXPLORATION_STATS_FOOTER);
-        
+
 //        
 //        System.out.println("Races: "+MCRTest.races.size()+"\n"+MCRTest.races);
 //        System.out.println("NPEs: "+JUnit4MCRRunner.npes.size()+"\n"+JUnit4MCRRunner.npes);

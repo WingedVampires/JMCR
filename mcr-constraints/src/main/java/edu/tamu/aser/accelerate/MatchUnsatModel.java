@@ -9,13 +9,12 @@ public class MatchUnsatModel {
     // assert content - assert name
     private final HashMap<String, String> assertNameToContentMap = new HashMap<>();
     // 全部的unsat-core
-    private final HashSet<String> unsatSet = new HashSet<>();
+    private final HashSet<String> unsatCoreSet = new HashSet<>();
     // 当前trace已命名的条件的名称集合
     private final HashSet<String> curAssertNameSet = new HashSet<>();
     // 当前trace的所有可能条件
     private final ArrayList<ArrayList<String>> curAllConditionsList = new ArrayList<>();
     private long index = 0L;
-    private int time = 1;
 
 
     public static long smtNum = 0;
@@ -44,7 +43,7 @@ public class MatchUnsatModel {
 
         System.out.println("所有unsat-core：\n");
 
-        for (String s : unsatSet)
+        for (String s : unsatCoreSet)
             System.out.println(s);
 
         System.out.println();
@@ -64,7 +63,7 @@ public class MatchUnsatModel {
             unsatConditions.add(getAssertAllPossibleCondition(assertContent));
         }
 
-        unsatSet.addAll(getAssertsAllPossibleCondition(unsatConditions));
+        unsatCoreSet.addAll(getAssertsAllPossibleCondition(unsatConditions));
     }
 
     /**
@@ -81,7 +80,7 @@ public class MatchUnsatModel {
             // 一种组合的所有条件
             List<String> conditions = Arrays.asList(traceCondition.split(" "));
 
-            for (String unsat : unsatSet) {
+            for (String unsat : unsatCoreSet) {
                 boolean isSat = false;
 
                 // 判断是否有unsat-core
@@ -105,8 +104,110 @@ public class MatchUnsatModel {
         return index != traceAllPossibleCondition.size();
     }
 
+    /**
+     * 检查当前trace的所有条件组合中是否包含已记录的unsat
+     * 深度优先遍历所有条件，当算出一个完整条件后立即判段是否unsat-core
+     *
+     * @return true表示需要进行z3求解
+     */
+    public boolean checkTraceUnsat_less_memory() {
+        long numOfAllConditions = 1L;
+
+        for (ArrayList<String> list : curAllConditionsList)
+            numOfAllConditions *= list.size();
+
+        if (numOfAllConditions / 1000000 > 0)
+            return true;
+
+        return getUnsatNum(curAllConditionsList, unsatCoreSet, 0, "") != numOfAllConditions;
+    }
+
+    // 获得在目标条件组合中多个unsat出现的总个数
+    private long getUnsatNum(ArrayList<ArrayList<String>> conditions, HashSet<String> unsatSet, int indexOfI, String cons) {
+        long count = 0L;
+        int len = conditions.size();
+
+
+        if (indexOfI >= len) {
+            List<String> conss = Arrays.asList(cons.split(" "));
+
+            for (String unsat : unsatSet) {
+                boolean isSat = false;
+
+                // 判断是否有unsat-core
+                for (String u : unsat.split(" ")) {
+                    if (!conss.contains(u)) {
+                        isSat = true;
+                        break;
+                    }
+                }
+
+                //isSat值不变代表当前条件包含当前unsat-core的所有内容，即当前条件unsat，可以从trace的所有条件中删除当前条件
+                if (!isSat) {
+                    return 1;
+                }
+            }
+
+            return 0;
+        }
+
+        for (int j = 0; j < conditions.get(indexOfI).size(); ++j) {
+            count += getUnsatNum(conditions, unsatSet, indexOfI + 1, cons + " " + conditions.get(indexOfI).get(j));
+        }
+
+        return count;
+    }
+
+    // 获得在目标条件组合中某个unsat出现的个数
+    private long getUnsatNum(ArrayList<ArrayList<String>> conditions, ArrayList<String> unsat, long mult, long elseMult) {
+        long count = 0L;
+
+        ArrayList<String> condition;
+        ArrayList<ArrayList<String>> tmpCondition;
+        ArrayList<String> tmpUnsat;
+
+        if (unsat.size() == 0) // unsat都匹配上了
+            return mult * elseMult;
+        else if (conditions.size() > 0)
+            condition = conditions.get(0);
+        else
+            return 0;
+
+        int numOfCondition = condition.size();
+        int index = 0;
+        //剩余的条件们
+        tmpCondition = (ArrayList<ArrayList<String>>) conditions.clone();
+        tmpCondition.remove(condition);
+
+        boolean haveUnsatElement = false;
+
+        for (String con : condition) {
+            haveUnsatElement = false;
+            List<String> cons = Arrays.asList(con.split(" "));
+            tmpUnsat = (ArrayList<String>) unsat.clone();
+
+            for (String u : unsat) {
+                if (cons.contains(u)) {
+                    haveUnsatElement = true;
+                    tmpUnsat.remove(u);
+                }
+            }
+
+            if (haveUnsatElement)
+                count += getUnsatNum(tmpCondition, tmpUnsat, mult, elseMult / numOfCondition);
+            else
+                index++;
+        }
+
+        //如果没有所需unsat-core内容
+        if (index != 0)
+            count += getUnsatNum(tmpCondition, unsat, mult * index, elseMult / numOfCondition);
+
+        return count;
+    }
+
     // 获得assert的命名
-    public String getAssertName(String assertContent) {
+    private String getAssertName(String assertContent) {
         if (!assertContentToNameMap.containsKey(assertContent)) {
             // 分别存储名称到内容和内容到名称的映射，方便读取
             assertContentToNameMap.put(assertContent, "A" + index);
@@ -124,7 +225,7 @@ public class MatchUnsatModel {
      * @param assertNum
      * @return true表示该命名在当前trace中无记录
      */
-    public boolean addCurAssertNames(String assertNum) {
+    private boolean addCurAssertNames(String assertNum) {
         if (!curAssertNameSet.contains(assertNum)) {
             curAssertNameSet.add(assertNum);
             return true;
@@ -144,11 +245,6 @@ public class MatchUnsatModel {
         String assertName = getAssertName(simple);
 
         curAllConditionsList.add(getAssertAllPossibleCondition(simple));
-
-//        if (addCurAssertNames(assertName))
-//            return "(! " + simple + " :named " + assertName + " )";
-//        else
-//            return simple;
 
         if (addCurAssertNames(assertName))
             return "(assert (! " + simple + " :named " + assertName + " ) )\n";
@@ -176,7 +272,7 @@ public class MatchUnsatModel {
             AssertDetailInfo leftAssertDetailInfo = AssertDetailInfo.getAssertDetailInfo(left);
             AssertDetailInfo rightAssertDetailInfo = AssertDetailInfo.getAssertDetailInfo(right);
 
-            if (relation == "AND") {
+            if (relation.equals("AND")) {
                 // and条件拆开后命名
                 if (leftAssertDetailInfo == null)
 //                result.append("(assert " + namedSimpleAssert(left) + " )\n");
@@ -189,7 +285,7 @@ public class MatchUnsatModel {
                     result.append(namedSimpleAssert(right));
                 else
                     result.append(namedComplexAssert(right));
-            } else if (relation == "OR") {
+            } else if (relation.equals("OR")) {
                 // or条件整句命名
 //            result.append("(assert " + namedSimpleAssert(complex) + " )\n");
                 result.append(namedSimpleAssert(complex));
@@ -201,7 +297,7 @@ public class MatchUnsatModel {
     }
 
     // 获得一个条件语句的所有可能组合
-    public ArrayList<String> getAssertAllPossibleCondition(String ass) {
+    private ArrayList<String> getAssertAllPossibleCondition(String ass) {
         ArrayList<String> result = new ArrayList<>();
 
         AssertDetailInfo assertDetailInfo = AssertDetailInfo.getAssertDetailInfo(ass);
@@ -213,10 +309,10 @@ public class MatchUnsatModel {
             String right = assertDetailInfo.getRight();
             String relation = assertDetailInfo.getRelation();
 
-            if (relation == "OR") { // or的组合
+            if (relation.equals("OR")) { // or的组合
                 result.addAll(getAssertAllPossibleCondition(left));
                 result.addAll(getAssertAllPossibleCondition(right));
-            } else if (relation == "AND") { // and的组合
+            } else if (relation.equals("AND")) { // and的组合
                 for (String l : getAssertAllPossibleCondition(left)) {
                     for (String r : getAssertAllPossibleCondition(right)) {
                         result.add(l + " " + r);
@@ -232,21 +328,33 @@ public class MatchUnsatModel {
      * @param conditionsList 需要计算的条件的组合的list
      * @return 所有可能组合
      */
-    public ArrayList<String> getAssertsAllPossibleCondition(ArrayList<ArrayList<String>> conditionsList) {
+    private ArrayList<String> getAssertsAllPossibleCondition(ArrayList<ArrayList<String>> conditionsList) {
+        ArrayList<String> tem;
+        ArrayList<String> list;
+        String s;
         ArrayList<String> result = new ArrayList<>();
 
         ArrayList<String> tmp = new ArrayList<>();
         if (conditionsList.size() > 0) result.addAll(conditionsList.get(0));
 
         for (int i = 1; i < conditionsList.size(); ++i) {
-            ArrayList<String> list = conditionsList.get(i);
+            list = conditionsList.get(i);
 
             for (String r : result)
-                for (String l : list)
-                    tmp.add(r + " " + l);
+                for (String l : list) {
+                    s = r + " " + l;
+                    tmp.add(s);
 
+                }
+
+
+            tem = result;
             result = tmp;
-            tmp = new ArrayList<>();
+            tmp = tem;
+            tmp.clear();
+//            result.clear();
+//            result.addAll(tmp);
+//            tmp.clear();
         }
 
         return result;

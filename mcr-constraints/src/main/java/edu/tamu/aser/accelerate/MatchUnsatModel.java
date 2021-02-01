@@ -116,17 +116,23 @@ public class MatchUnsatModel {
         for (ArrayList<String> list : curAllConditionsList)
             numOfAllConditions *= list.size();
 
+        System.out.println(numOfAllConditions);
         if (numOfAllConditions / 1000000 > 0)
             return true;
 
-        return getUnsatNum(curAllConditionsList, unsatCoreSet, 0, "") != numOfAllConditions;
+        return isUnsat(curAllConditionsList, unsatCoreSet, 0, "");
     }
 
-    // 获得在目标条件组合中多个unsat出现的总个数
-    private long getUnsatNum(ArrayList<ArrayList<String>> conditions, HashSet<String> unsatSet, int indexOfI, String cons) {
-        long count = 0L;
+    /**
+     * @param conditions
+     * @param unsatSet
+     * @param indexOfI
+     * @param cons
+     * @return false表示结果已知，是unsat的；true表示结果未知，需要求解
+     */
+    private Boolean isUnsat(ArrayList<ArrayList<String>> conditions, HashSet<String> unsatSet, int indexOfI, String cons) {
+        Boolean result = false;
         int len = conditions.size();
-
 
         if (indexOfI >= len) {
             List<String> conss = Arrays.asList(cons.split(" "));
@@ -144,18 +150,22 @@ public class MatchUnsatModel {
 
                 //isSat值不变代表当前条件包含当前unsat-core的所有内容，即当前条件unsat，可以从trace的所有条件中删除当前条件
                 if (!isSat) {
-                    return 1;
+                    return false;
                 }
             }
 
-            return 0;
+            return true;
         }
 
         for (int j = 0; j < conditions.get(indexOfI).size(); ++j) {
-            count += getUnsatNum(conditions, unsatSet, indexOfI + 1, cons + " " + conditions.get(indexOfI).get(j));
+            result = result || isUnsat(conditions, unsatSet, indexOfI + 1, cons + " " + conditions.get(indexOfI).get(j));
+
+            if (result) {
+                break;
+            }
         }
 
-        return count;
+        return result;
     }
 
     // 获得在目标条件组合中某个unsat出现的个数

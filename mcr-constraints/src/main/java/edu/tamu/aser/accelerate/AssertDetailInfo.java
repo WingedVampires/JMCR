@@ -17,7 +17,6 @@ public class AssertDetailInfo {
         String[] lines = ass.split("\\s+");
         AssertDetailInfo assertDetailInfo = new AssertDetailInfo();
         int parentthesis = 0;
-        int rightParentthesis = 0;
 
         if (lines[0].contains("and"))
             assertDetailInfo.setRelation("AND");
@@ -51,8 +50,8 @@ public class AssertDetailInfo {
 
                 assertDetailInfo.addRight(line + " ");
 
-            ++i;
-        } while (i < lines.length && parentthesis > 0);
+                ++i;
+            } while (i < lines.length && parentthesis > 0);
 
         assertDetailInfo.removeSpaces();
 

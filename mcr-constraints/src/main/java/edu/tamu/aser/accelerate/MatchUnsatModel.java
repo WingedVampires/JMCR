@@ -116,7 +116,6 @@ public class MatchUnsatModel {
         for (ArrayList<String> list : curAllConditionsList)
             numOfAllConditions *= list.size();
 
-        System.out.println(numOfAllConditions);
         if (numOfAllConditions / 1000000 > 0)
             return true;
 

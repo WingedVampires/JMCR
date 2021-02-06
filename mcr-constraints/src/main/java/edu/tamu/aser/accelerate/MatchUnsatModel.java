@@ -20,6 +20,8 @@ public class MatchUnsatModel {
     public static long smtNum = 0;
     public static long jumpNum = 0;
 
+    private static long stTime = 0;
+
     public static MatchUnsatModel getInstance() {
         if (instance == null) {
             instance = new MatchUnsatModel();
@@ -110,16 +112,21 @@ public class MatchUnsatModel {
      *
      * @return true表示需要进行z3求解
      */
-    public boolean checkTraceUnsat_less_memory() {
-        long numOfAllConditions = 1L;
+    public boolean check_trace_unsat_less_memory() {
+        stTime = System.currentTimeMillis();
+        System.out.println(curAllConditionsList.size() + " * " + unsatCoreSet.size());
 
-        for (ArrayList<String> list : curAllConditionsList)
-            numOfAllConditions *= list.size();
+//        long numOfAllConditions = 1;
+//        for (ArrayList<String> list : curAllConditionsList)
+//            numOfAllConditions *= list.size();
+//
+//        System.out.println(numOfAllConditions);
 
-        if (numOfAllConditions / 1000000 > 0)
-            return true;
+        Boolean result = isUnsat(curAllConditionsList, unsatCoreSet, 0, "");
 
-        return isUnsat(curAllConditionsList, unsatCoreSet, 0, "");
+
+//        System.out.println(result + "\n");
+        return result;
     }
 
     /**
@@ -134,6 +141,9 @@ public class MatchUnsatModel {
         int len = conditions.size();
 
         if (indexOfI >= len) {
+            if (System.currentTimeMillis() - stTime >= 550)
+                return true;
+
             List<String> conss = Arrays.asList(cons.split(" "));
 
             for (String unsat : unsatSet) {

@@ -1200,7 +1200,7 @@ public class ConstraintsBuildEngine {
          * for all the varaibles that appear in the constraints
          */
         //根据历史unsat-core判断是否需要进行z3约束求解
-        if (MatchUnsatModel.getInstance().checkTraceUnsat_less_memory()) {
+        if (MatchUnsatModel.getInstance().check_trace_unsat_less_memory()) {
             id.incrementAndGet();
             ConstraintsSolving task = new ConstraintsSolving(config, id.get());
 

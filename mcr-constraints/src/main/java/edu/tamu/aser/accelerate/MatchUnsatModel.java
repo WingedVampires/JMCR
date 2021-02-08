@@ -9,7 +9,7 @@ public class MatchUnsatModel {
     // assert content - assert name
     private final HashMap<String, String> assertNameToContentMap = new HashMap<>();
     // 全部的unsat-core
-    private final HashSet<String> unsatCoreSet = new HashSet<>();
+    private final TreeSet<HashSet<String>> unsatCoreSet = new TreeSet<>(new HashSetComparator());
     // 当前trace已命名的条件的名称集合
     private final HashSet<String> curAssertNameSet = new HashSet<>();
     // 当前trace的所有可能条件
@@ -21,6 +21,27 @@ public class MatchUnsatModel {
     public static long jumpNum = 0;
 
     private static long stTime = 0;
+
+    public static void main(String[] args) {
+        TreeSet<HashSet<String>> treeSet = new TreeSet<>(new HashSetComparator());
+        HashSet<String> hashSet = new HashSet<>();
+        HashSet<String> hashSet2 = new HashSet<>();
+        HashSet<String> hashSet3 = new HashSet<>();
+
+        hashSet.add("A1");
+        hashSet.add("A5");
+        hashSet.add("A6");
+        hashSet2.add("A6");
+        hashSet2.add("A100");
+        hashSet3.add("A6");
+        hashSet3.add("A10");
+        treeSet.add(hashSet2);
+        treeSet.add(hashSet);
+        treeSet.add(hashSet3);
+        System.out.println(hashSet3);
+        System.out.println(treeSet);
+
+    }
 
     public static MatchUnsatModel getInstance() {
         if (instance == null) {
@@ -38,19 +59,6 @@ public class MatchUnsatModel {
         curAllConditionsList.clear();
     }
 
-    public void printInfo() {
-        System.out.println("所有可能条件：\n");
-        for (String s : getAssertsAllPossibleCondition(curAllConditionsList))
-            System.out.println(s);
-
-        System.out.println("所有unsat-core：\n");
-
-        for (String s : unsatCoreSet)
-            System.out.println(s);
-
-        System.out.println();
-    }
-
     /**
      * 添加unsat-core
      *
@@ -65,45 +73,32 @@ public class MatchUnsatModel {
             unsatConditions.add(getAssertAllPossibleCondition(assertContent));
         }
 
-        unsatCoreSet.addAll(getAssertsAllPossibleCondition(unsatConditions));
-    }
 
-    /**
-     * 检查当前trace的所有条件组合中是否包含已记录的unsat
-     *
-     * @return true表示需要进行z3求解
-     */
-    public boolean checkTraceUnsat() {
-        int index = 0;
-        // 计算当前trace的条件的所有组合
-        ArrayList<String> traceAllPossibleCondition = getAssertsAllPossibleCondition(curAllConditionsList);
+//        unsatCoreSet.addAll(getAssertsAllPossibleCondition2(unsatConditions));
 
-        for (String traceCondition : traceAllPossibleCondition) {
-            // 一种组合的所有条件
-            List<String> conditions = Arrays.asList(traceCondition.split(" "));
+        for (HashSet<String> hashSet : getAssertsAllPossibleCondition(unsatConditions)) {
+            boolean needAdd = true;
 
-            for (String unsat : unsatCoreSet) {
-                boolean isSat = false;
+            for (HashSet<String> unsat : (TreeSet<HashSet<String>>) unsatCoreSet.clone()) {
 
-                // 判断是否有unsat-core
-                for (String u : unsat.split(" ")) {
-                    if (!conditions.contains(u)) {
-                        isSat = true;
+                // 检查是否需要删除当前unsat-core或是否需要删除历史unsat-core
+                if (hashSet.size() >= unsat.size()) {
+                    if (hashSet.containsAll(unsat)) {
+                        needAdd = false;
                         break;
                     }
-                }
 
-                //isSat值不变代表当前条件包含当前unsat-core的所有内容，即当前条件unsat，可以从trace的所有条件中删除当前条件
-                if (!isSat) {
-                    index++;//traceAllPossibleCondition.remove(traceCondition);
-                    break;
+                } else {
+                    if (unsat.containsAll(hashSet)) {
+                        unsatCoreSet.remove(unsat);
+                    }
                 }
-
             }
+
+            if (needAdd)
+                unsatCoreSet.add(hashSet);
         }
 
-//        return !traceAllPossibleCondition.isEmpty();
-        return index != traceAllPossibleCondition.size();
     }
 
     /**
@@ -136,31 +131,19 @@ public class MatchUnsatModel {
      * @param cons
      * @return false表示结果已知，是unsat的；true表示结果未知，需要求解
      */
-    private Boolean isUnsat(ArrayList<ArrayList<String>> conditions, HashSet<String> unsatSet, int indexOfI, String cons) {
+    private Boolean isUnsat(ArrayList<ArrayList<String>> conditions, TreeSet<HashSet<String>> unsatSet, int indexOfI, String cons) {
         Boolean result = false;
         int len = conditions.size();
 
         if (indexOfI >= len) {
-            if (System.currentTimeMillis() - stTime >= 550)
+            if (System.currentTimeMillis() - stTime >= 700)
                 return true;
 
-            List<String> conss = Arrays.asList(cons.split(" "));
+            HashSet<String> conss = new HashSet<>(Arrays.asList(cons.split(" ")));
 
-            for (String unsat : unsatSet) {
-                boolean isSat = false;
-
-                // 判断是否有unsat-core
-                for (String u : unsat.split(" ")) {
-                    if (!conss.contains(u)) {
-                        isSat = true;
-                        break;
-                    }
-                }
-
-                //isSat值不变代表当前条件包含当前unsat-core的所有内容，即当前条件unsat，可以从trace的所有条件中删除当前条件
-                if (!isSat) {
+            for (HashSet<String> unsat : unsatSet) {
+                if (conss.containsAll(unsat))
                     return false;
-                }
             }
 
             return true;
@@ -175,54 +158,6 @@ public class MatchUnsatModel {
         }
 
         return result;
-    }
-
-    // 获得在目标条件组合中某个unsat出现的个数
-    private long getUnsatNum(ArrayList<ArrayList<String>> conditions, ArrayList<String> unsat, long mult, long elseMult) {
-        long count = 0L;
-
-        ArrayList<String> condition;
-        ArrayList<ArrayList<String>> tmpCondition;
-        ArrayList<String> tmpUnsat;
-
-        if (unsat.size() == 0) // unsat都匹配上了
-            return mult * elseMult;
-        else if (conditions.size() > 0)
-            condition = conditions.get(0);
-        else
-            return 0;
-
-        int numOfCondition = condition.size();
-        int index = 0;
-        //剩余的条件们
-        tmpCondition = (ArrayList<ArrayList<String>>) conditions.clone();
-        tmpCondition.remove(condition);
-
-        boolean haveUnsatElement = false;
-
-        for (String con : condition) {
-            haveUnsatElement = false;
-            List<String> cons = Arrays.asList(con.split(" "));
-            tmpUnsat = (ArrayList<String>) unsat.clone();
-
-            for (String u : unsat) {
-                if (cons.contains(u)) {
-                    haveUnsatElement = true;
-                    tmpUnsat.remove(u);
-                }
-            }
-
-            if (haveUnsatElement)
-                count += getUnsatNum(tmpCondition, tmpUnsat, mult, elseMult / numOfCondition);
-            else
-                index++;
-        }
-
-        //如果没有所需unsat-core内容
-        if (index != 0)
-            count += getUnsatNum(tmpCondition, unsat, mult * index, elseMult / numOfCondition);
-
-        return count;
     }
 
     // 获得assert的命名
@@ -347,7 +282,7 @@ public class MatchUnsatModel {
      * @param conditionsList 需要计算的条件的组合的list
      * @return 所有可能组合
      */
-    private ArrayList<String> getAssertsAllPossibleCondition(ArrayList<ArrayList<String>> conditionsList) {
+    private TreeSet<HashSet<String>> getAssertsAllPossibleCondition(ArrayList<ArrayList<String>> conditionsList) {
         ArrayList<String> tem;
         ArrayList<String> list;
         String s;
@@ -366,18 +301,17 @@ public class MatchUnsatModel {
 
                 }
 
-
             tem = result;
             result = tmp;
             tmp = tem;
             tmp.clear();
-//            result.clear();
-//            result.addAll(tmp);
-//            tmp.clear();
         }
 
-        return result;
+        TreeSet<HashSet<String>> hashsetResult = new TreeSet<>(new HashSetComparator());
+        for (String re : result) {
+            hashsetResult.add(new HashSet<String>(Arrays.asList(re.split(" "))));
+        }
+
+        return hashsetResult;
     }
-
-
 }

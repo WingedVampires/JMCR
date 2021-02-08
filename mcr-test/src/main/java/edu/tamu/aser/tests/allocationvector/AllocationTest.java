@@ -20,7 +20,7 @@ public class AllocationTest {
         allocationTest.testFullAllocationAndFree();
     }
 
-    @Test
+//    @Test
     public void testOneTenthAllocation() throws Exception {
         allocateAndEnsureNoErrors(40, 2, 2);
     }
@@ -30,37 +30,37 @@ public class AllocationTest {
         freeAndEnsureNoErrors(40, 2, 2);
     }
 
-    @Test
+    //    @Test
     public void testOneTenthAllocationAndFree() throws Exception {
         allocateAndFreeAndEnsureNoErrors(40, 2, 2);
     }
 
-    @Test
+    //    @Test
     public void testHalfAllocation() throws Exception {
         allocateAndEnsureNoErrors(8, 2, 2);
     }
 
-    @Test
+    //    @Test
     public void testHalfFreeing() throws Exception {
         freeAndEnsureNoErrors(8, 2, 2);
     }
 
-    @Test
+    //    @Test
     public void testHalfAllocationAndFree() throws Exception {
         allocateAndFreeAndEnsureNoErrors(8, 2, 2);
     }
 
-    @Test
+    //    @Test
     public void testFullAllocation() throws Exception {
         allocateAndEnsureNoErrors(4, 2, 2);
     }
 
-    @Test
+    //    @Test
     public void testFullFreeing() throws Exception {
         freeAndEnsureNoErrors(4, 2, 2);
     }
 
-    @Test
+    //    @Test
     public void testFullAllocationAndFree() throws Exception {
         allocateAndFreeAndEnsureNoErrors(4, 2, 2);
     }

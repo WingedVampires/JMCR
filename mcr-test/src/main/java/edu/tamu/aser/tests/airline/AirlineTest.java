@@ -2,12 +2,10 @@ package edu.tamu.aser.tests.airline;
 
 import edu.tamu.aser.reex.JUnit4MCRRunner;
 import junit.framework.Assert;
-//import omcr.airline.airline;
-
-import static org.junit.Assert.fail;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import static org.junit.Assert.fail;
 
 
 
@@ -17,8 +15,8 @@ public class AirlineTest {
     public static void main(String args[]) throws Exception {
         AirlineTest airlineTest = new AirlineTest();
 //        airlineTest.test5ThreadsFullInvarient();
-//        airlineTest.test5ThreadsNotTooMany();
-        airlineTest.test5ThreadsNotTooFew();
+        airlineTest.test5ThreadsNotTooMany();
+//        airlineTest.test5ThreadsNotTooFew();
 //        airlineTest.test3ThreadsFullInvarient();
 //        airlineTest.test3ThreadsNotTooMany();
 //        airlineTest.test3ThreadsNotTooFew();

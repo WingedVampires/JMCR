@@ -3,7 +3,6 @@ package edu.tamu.aser.accelerate;
 import java.util.*;
 
 public class MatchUnsatModel {
-    private static MatchUnsatModel instance = null;
     // assert name - assert content 存储所有assert及其对编号，可能会比较多，后续可以优化
     private final HashMap<String, String> assertContentToNameMap = new HashMap<>();
     // assert content - assert name
@@ -14,13 +13,15 @@ public class MatchUnsatModel {
     private final HashSet<String> curAssertNameSet = new HashSet<>();
     // 当前trace的所有可能条件
     private final ArrayList<ArrayList<String>> curAllConditionsList = new ArrayList<>();
-    private long index = 0L;
-
-
+    // 计算了的smt求解个数
     public static long smtNum = 0;
+    // 跳过了的smt求解个数
     public static long jumpNum = 0;
-
-    private static long stTime = 0;
+    private static MatchUnsatModel instance = null;
+    // 统计下一个新assert的编号
+    private long indexOfAssert = 0L;
+    // 记录一次unsat-core匹配的开始时间
+    private long stTime = 0;
 
     public static void main(String[] args) {
         TreeSet<HashSet<String>> treeSet = new TreeSet<>(new HashSetComparator());
@@ -65,7 +66,6 @@ public class MatchUnsatModel {
      * @param unsatCore z3求解后返回的unsat-core，例：A1 A3 A8
      */
     public void addUnsatCore(String unsatCore) {
-        //unsatSet.add(unsatCore.substring(1, unsatCore.length() - 1));
         ArrayList<ArrayList<String>> unsatConditions = new ArrayList<>();
 
         for (String assertName : unsatCore.split(" ")) {
@@ -73,15 +73,12 @@ public class MatchUnsatModel {
             unsatConditions.add(getAssertAllPossibleCondition(assertContent));
         }
 
-
-//        unsatCoreSet.addAll(getAssertsAllPossibleCondition2(unsatConditions));
-
+        // 检查是否需要删除当前unsat-core或是否需要删除历史unsat-core
         for (HashSet<String> hashSet : getAssertsAllPossibleCondition(unsatConditions)) {
             boolean needAdd = true;
 
             for (HashSet<String> unsat : (TreeSet<HashSet<String>>) unsatCoreSet.clone()) {
 
-                // 检查是否需要删除当前unsat-core或是否需要删除历史unsat-core
                 if (hashSet.size() >= unsat.size()) {
                     if (hashSet.containsAll(unsat)) {
                         needAdd = false;
@@ -107,9 +104,9 @@ public class MatchUnsatModel {
      *
      * @return true表示需要进行z3求解
      */
-    public boolean check_trace_unsat_less_memory() {
+    public boolean checkTraceUnsat() {
         stTime = System.currentTimeMillis();
-        System.out.println(curAllConditionsList.size() + " * " + unsatCoreSet.size());
+//        System.out.println(curAllConditionsList.size() + " * " + unsatCoreSet.size());
 
 //        long numOfAllConditions = 1;
 //        for (ArrayList<String> list : curAllConditionsList)
@@ -160,13 +157,15 @@ public class MatchUnsatModel {
         return result;
     }
 
-    // 获得assert的命名
+    /**
+     * 获得assert的命名
+     */
     private String getAssertName(String assertContent) {
         if (!assertContentToNameMap.containsKey(assertContent)) {
             // 分别存储名称到内容和内容到名称的映射，方便读取
-            assertContentToNameMap.put(assertContent, "A" + index);
-            assertNameToContentMap.put("A" + index, assertContent);
-            index++;
+            assertContentToNameMap.put(assertContent, "A" + indexOfAssert);
+            assertNameToContentMap.put("A" + indexOfAssert, assertContent);
+            indexOfAssert++;
         }
 
         return assertContentToNameMap.get(assertContent);
@@ -188,7 +187,7 @@ public class MatchUnsatModel {
         return false;
     }
 
-    /***
+    /**
      * 处理简单的原始或者单一的or的条件语句，即为条件命名，例：(< x1 x2 )
      * 同时记录条件的所有组合并且存储到{@link #curAllConditionsList}中
      *
@@ -206,7 +205,7 @@ public class MatchUnsatModel {
             return "(assert " + simple + " )\n";
     }
 
-    /***
+    /**
      * 将复杂的条件转换成简单的条件，即拆分and条件。同时分别对条件进行命名。or的条件整句命名，and的条件拆开后命名。
      * 记录条件的所有组合操作再{@link #namedSimpleAssert}中完成
      * @param complex

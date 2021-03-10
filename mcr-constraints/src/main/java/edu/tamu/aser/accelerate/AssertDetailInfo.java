@@ -2,7 +2,7 @@ package edu.tamu.aser.accelerate;
 
 public class AssertDetailInfo {
 
-    // (or left right)
+    // 例如表达式 (or left right)
     private String left;
     private String right;
 

@@ -22,6 +22,9 @@ public class MatchUnsatModel {
     private long indexOfAssert = 0L;
     // 记录一次unsat-core匹配的开始时间
     private long stTime = 0;
+    public long errorStTime = 0;
+    // 当一次unsat-core的匹配时间大于等于standradTime时，停止匹配直接约束求解
+    private long standradTime = 700;
 
     public static void main(String[] args) {
         TreeSet<HashSet<String>> treeSet = new TreeSet<>(new HashSetComparator());
@@ -36,11 +39,8 @@ public class MatchUnsatModel {
         hashSet2.add("A100");
         hashSet3.add("A6");
         hashSet3.add("A10");
-        treeSet.add(hashSet2);
-        treeSet.add(hashSet);
-        treeSet.add(hashSet3);
+
         System.out.println(hashSet3);
-        System.out.println(treeSet);
 
     }
 
@@ -130,10 +130,9 @@ public class MatchUnsatModel {
      */
     private Boolean isUnsat(ArrayList<ArrayList<String>> conditions, TreeSet<HashSet<String>> unsatSet, int indexOfI, String cons) {
         Boolean result = false;
-        int len = conditions.size();
 
-        if (indexOfI >= len) {
-            if (System.currentTimeMillis() - stTime >= 700)
+        if (indexOfI >= conditions.size()) {
+            if (System.currentTimeMillis() - stTime >= standradTime)
                 return true;
 
             HashSet<String> conss = new HashSet<>(Arrays.asList(cons.split(" ")));
@@ -312,5 +311,13 @@ public class MatchUnsatModel {
         }
 
         return hashsetResult;
+    }
+
+    public long getStandradTime() {
+        return standradTime;
+    }
+
+    public void setStandradTime(long time) {
+        standradTime = Math.max(standradTime, time);
     }
 }

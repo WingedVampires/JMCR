@@ -1,4 +1,5 @@
 package edu.tamu.aser.tests;
+
 import edu.tamu.aser.reex.JUnit4MCRRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;

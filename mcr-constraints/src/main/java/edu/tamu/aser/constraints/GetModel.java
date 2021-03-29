@@ -86,6 +86,8 @@ public class GetModel {
 				fis.close();
 				return model;
 			} else if ("unsat".equals(result)) {
+				// 设置匹配的停止时间
+				MatchUnsatModel.getInstance().setStandradTime(System.currentTimeMillis() - MatchUnsatModel.getInstance().errorStTime);
 				//constraint not satisfied
 				String line = reader.readLine();
 				while (line != null) {

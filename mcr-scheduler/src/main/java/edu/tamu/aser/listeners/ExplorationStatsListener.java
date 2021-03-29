@@ -132,6 +132,7 @@ public class ExplorationStatsListener extends ExplorationListenerAdapter {
         System.out.println(EXPLORATION_TIME + getDurationString(System.currentTimeMillis() - startTime));
         System.out.println("SMT_FILE_NUMBER: " + MatchUnsatModel.smtNum);
         System.out.println("JUMP_SMT_NUMBER: " + MatchUnsatModel.jumpNum);
+        System.out.println("SMT_STANDRAD_TIME: " + MatchUnsatModel.getInstance().getStandradTime());
         if (failureDetected) {
             System.out.println(FAILURE_DETECTED_MESSAGE);
         }

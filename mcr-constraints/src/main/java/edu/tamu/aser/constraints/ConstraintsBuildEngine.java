@@ -573,6 +573,7 @@ public class ConstraintsBuildEngine {
 
     /**
      * return true if node1 can reach node2 from the ordering relation
+     * node1 必发生于 node2 之前
      *
      * @param node1
      * @param node2
@@ -745,10 +746,12 @@ public class ConstraintsBuildEngine {
                     Configuration.rwConstraints += 1;
 
                     //add wnode1 and its dependent nodes
+                    // 保证可行性 feasibility
                     {
                         HashSet<AbstractNode> w1_nodes = getDependentNodes(trace, wnode1);
                         w1_nodes.removeAll(depNodes);//remove common dep nodes
 
+                        // 保证写事件之前事件的的可行性
                         depNodes.add(wnode1);//add wnode2 itself
                         depNodes.addAll(w1_nodes);//add all dependent nodes
 
@@ -769,7 +772,7 @@ public class ConstraintsBuildEngine {
                         } else {
 
                             Configuration.numReads += w1_readnodes.size();
-                            readNodes.addAll(w1_readnodes);
+                            readNodes.addAll(w1_readnodes); // 保证写事件前的所有读事件读取到和之前相同的值
                         }
                     }
 
@@ -786,6 +789,7 @@ public class ConstraintsBuildEngine {
                                 cons_c_end += " ) ";
 
                             }
+
                             String cons_w2node = "";
                             //add wnode2 and its dependent nodes
                             {
@@ -824,6 +828,7 @@ public class ConstraintsBuildEngine {
 
                         }
                     }  //end for other_writes
+
                     if (last_cons_d != null) {
                         cons_c += last_cons_d;
                     }
@@ -1194,7 +1199,7 @@ public class ConstraintsBuildEngine {
      */
 
     public Vector<String> generateSchedule(StringBuilder causalConstraint, long gid, Long wgid, long gid_prefix) {
-
+        MatchUnsatModel.getInstance().errorStTime = System.currentTimeMillis();
         /*
          * I will declare the constraints variables here
          * for all the varaibles that appear in the constraints
@@ -1204,7 +1209,6 @@ public class ConstraintsBuildEngine {
             id.incrementAndGet();
             ConstraintsSolving task = new ConstraintsSolving(config, id.get());
 
-//            declareVariables(CONS_ASSERT_PO.append(causalConstraint).append(CONS_ASSERT_VALID));
             declareVariables(new StringBuilder("").append(CONS_ASSERT_PO).append(causalConstraint).append(CONS_ASSERT_VALID));
 
 //        String CONS_SETLOGIC = "(set-logic QF_IDL)\n";
@@ -1214,6 +1218,7 @@ public class ConstraintsBuildEngine {
             return task.schedule;
         } else {
             MatchUnsatModel.jumpNum++;
+
             return null;
         }
     }
@@ -1249,6 +1254,7 @@ public class ConstraintsBuildEngine {
                 AbstractNode node = nodes.get(i);
                 //
                 if (partialOrderMap.containsKey(node)) {
+                    //为了节省时间，做缓存
                     HashSet<AbstractNode> depNodes2 = specialDependentNodesMap.get(node);
                     if (depNodes2 == null) {
                         AbstractNode node2 = partialOrderMap.get(node);

@@ -171,17 +171,18 @@ public class ExplorationStatsListener extends ExplorationListenerAdapter {
     }
 
     private String getDurationString(long milliSecs) {
-        
+
         long secs = milliSecs / 1000;
         long mins = secs / 60;
         long hours = mins / 60;
         secs = secs % 60;
         mins = mins % 60;
-        
-        long milli = milliSecs - secs *1000;
-        
+
+//        long milli = milliSecs - secs *1000;
+        long milli = milliSecs % 1000;
+
         return String.format("%d:%02d:%02d  + %02d milli sec", hours, mins, secs, milli);
-        
+
     }
 
 }

@@ -1,5 +1,7 @@
 package edu.tamu.aser.accelerate;
 
+import javafx.util.Pair;
+
 import java.util.*;
 
 public class MatchUnsatModel {
@@ -25,24 +27,6 @@ public class MatchUnsatModel {
     public long errorStTime = 0;
     // 当一次unsat-core的匹配时间大于等于standradTime时，停止匹配直接约束求解
     private long standradTime = 700;
-
-    public static void main(String[] args) {
-        TreeSet<HashSet<String>> treeSet = new TreeSet<>(new HashSetComparator());
-        HashSet<String> hashSet = new HashSet<>();
-        HashSet<String> hashSet2 = new HashSet<>();
-        HashSet<String> hashSet3 = new HashSet<>();
-
-        hashSet.add("A1");
-        hashSet.add("A5");
-        hashSet.add("A6");
-        hashSet2.add("A6");
-        hashSet2.add("A100");
-        hashSet3.add("A6");
-        hashSet3.add("A10");
-
-        System.out.println(hashSet3);
-
-    }
 
     public static MatchUnsatModel getInstance() {
         if (instance == null) {
@@ -106,22 +90,16 @@ public class MatchUnsatModel {
      */
     public boolean checkTraceUnsat() {
         stTime = System.currentTimeMillis();
-//        System.out.println(curAllConditionsList.size() + " * " + unsatCoreSet.size());
 
-//        long numOfAllConditions = 1;
-//        for (ArrayList<String> list : curAllConditionsList)
-//            numOfAllConditions *= list.size();
-//
-//        System.out.println(numOfAllConditions);
+//        Boolean result = isUnsat(curAllConditionsList, unsatCoreSet, 0, "");
+        Boolean result = isUnsat_non_recursive(curAllConditionsList, unsatCoreSet);
 
-        Boolean result = isUnsat(curAllConditionsList, unsatCoreSet, 0, "");
-
-
-//        System.out.println(result + "\n");
         return result;
     }
 
     /**
+     * 递归匹配
+     *
      * @param conditions
      * @param unsatSet
      * @param indexOfI
@@ -130,6 +108,7 @@ public class MatchUnsatModel {
      */
     private Boolean isUnsat(ArrayList<ArrayList<String>> conditions, TreeSet<HashSet<String>> unsatSet, int indexOfI, String cons) {
         Boolean result = false;
+
 
         if (indexOfI >= conditions.size()) {
             if (System.currentTimeMillis() - stTime >= standradTime)
@@ -154,6 +133,49 @@ public class MatchUnsatModel {
         }
 
         return result;
+    }
+
+    /**
+     * 非递归匹配
+     *
+     * @param conditions
+     * @param unsatSet
+     * @return false表示结果已知，是unsat的；true表示结果未知，需要求解
+     */
+    private Boolean isUnsat_non_recursive(ArrayList<ArrayList<String>> conditions, TreeSet<HashSet<String>> unsatSet) {
+        Stack<Pair<Integer, String>> stack = new Stack<>();
+        stack.push(new Pair<>(0, ""));
+
+        while (!stack.isEmpty()) {
+            Pair<Integer, String> p = stack.pop();
+            int index = p.getKey();
+            String str = p.getValue();
+
+            if (index >= conditions.size()) {
+                boolean flag = true;
+                if (System.currentTimeMillis() - stTime >= standradTime)
+                    return true;
+
+                HashSet<String> conss = new HashSet<>(Arrays.asList(str.split(" ")));
+
+                for (HashSet<String> unsat : unsatSet) {
+                    if (conss.containsAll(unsat)) {
+                        flag = false;
+                        break;
+                    }
+                }
+
+                if (flag) {
+                    return true;
+                }
+            } else {
+                for (String s : conditions.get(index)) {
+                    stack.push(new Pair<>(index + 1, s + " " + str));
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -207,6 +229,7 @@ public class MatchUnsatModel {
     /**
      * 将复杂的条件转换成简单的条件，即拆分and条件。同时分别对条件进行命名。or的条件整句命名，and的条件拆开后命名。
      * 记录条件的所有组合操作再{@link #namedSimpleAssert}中完成
+     *
      * @param complex
      * @return 修改后的assert语句
      */
@@ -318,6 +341,6 @@ public class MatchUnsatModel {
     }
 
     public void setStandradTime(long time) {
-        standradTime = Math.max(standradTime, time);
+        standradTime = standradTime * 0.8 <= time ? (standradTime * 2 + time) / 3 : standradTime;
     }
 }

@@ -27,6 +27,8 @@ public class MatchUnsatModel {
     public long errorStTime = 0;
     // 当一次unsat-core的匹配时间大于等于standradTime时，停止匹配直接约束求解
     private long standradTime = 700;
+    // 单一的条件
+    private String singleCons = "";
 
     public static MatchUnsatModel getInstance() {
         if (instance == null) {
@@ -36,12 +38,31 @@ public class MatchUnsatModel {
         return instance;
     }
 
+    public static void main(String[] args) {
+        ArrayList<String> a = new ArrayList<>();
+        ArrayList<String> b = new ArrayList<>();
+        ArrayList<String> c = new ArrayList<>();
+        a.add("fjkj");
+        b.add("fjkj");
+        a.add("fjeo");
+        c.add("fjeo");
+        ArrayList<ArrayList<String>> list = new ArrayList<>();
+        list.add(a);
+        list.add(b);
+        list.add(c);
+
+        System.out.println(MatchUnsatModel.getInstance().dealSingleCondition(list));
+        System.out.println(list.size());
+    }
+
+
     /**
      * 每此约束求解前初始化之前trace的所有记录的命名（z3语法要求）和所有条件的可能组合
      */
     public void init() {
         curAssertNameSet.clear();
         curAllConditionsList.clear();
+        singleCons = "";
     }
 
     /**
@@ -90,9 +111,12 @@ public class MatchUnsatModel {
      */
     public boolean checkTraceUnsat() {
         stTime = System.currentTimeMillis();
-
+        ;
+//        String cons = dealSingleCondition(curAllConditionsList);
+        if (unsatCoreSet.isEmpty())
+            return true;
 //        Boolean result = isUnsat(curAllConditionsList, unsatCoreSet, 0, "");
-        Boolean result = isUnsat_non_recursive(curAllConditionsList, unsatCoreSet);
+        Boolean result = isUnsat_non_recursive(curAllConditionsList, unsatCoreSet, singleCons);
 
         return result;
     }
@@ -142,9 +166,9 @@ public class MatchUnsatModel {
      * @param unsatSet
      * @return false表示结果已知，是unsat的；true表示结果未知，需要求解
      */
-    private Boolean isUnsat_non_recursive(ArrayList<ArrayList<String>> conditions, TreeSet<HashSet<String>> unsatSet) {
+    private Boolean isUnsat_non_recursive(ArrayList<ArrayList<String>> conditions, TreeSet<HashSet<String>> unsatSet, String cons) {
         Stack<Pair<Integer, String>> stack = new Stack<>();
-        stack.push(new Pair<>(0, ""));
+        stack.push(new Pair<>(0, cons));
 
         while (!stack.isEmpty()) {
             Pair<Integer, String> p = stack.pop();
@@ -218,7 +242,14 @@ public class MatchUnsatModel {
     public String namedSimpleAssert(String simple) {
         String assertName = getAssertName(simple);
 
-        curAllConditionsList.add(getAssertAllPossibleCondition(simple));
+//        curAllConditionsList.add(getAssertAllPossibleCondition(simple));
+
+        ArrayList<String> list = getAssertAllPossibleCondition(simple);
+        if (list.size() == 1) {
+            singleCons += (list.get(0) + " ");
+        } else {
+            curAllConditionsList.add(list);
+        }
 
         if (addCurAssertNames(assertName))
             return "(assert (! " + simple + " :named " + assertName + " ) )\n";
@@ -341,6 +372,27 @@ public class MatchUnsatModel {
     }
 
     public void setStandradTime(long time) {
+
+//        standradTime = standradTime * 0.8 <= time ? (standradTime * 2 + time) / 3 : (standradTime * 19 + time) / 20;
         standradTime = standradTime * 0.8 <= time ? (standradTime * 2 + time) / 3 : standradTime;
+
+//        System.out.println(time + "    " + standradTime);
+    }
+
+    /**
+     * 将条件中的单个条件直接提取出来，以便加速循环匹配
+     *
+     * @return 提取出的条件
+     */
+    public String dealSingleCondition(ArrayList<ArrayList<String>> conditions) {
+        String result = "";
+        for (ArrayList<String> list : (ArrayList<ArrayList<String>>) conditions.clone()) {
+            if (list.size() == 1) {
+                result += (list.get(0) + " ");
+                conditions.remove(list);
+            }
+        }
+
+        return result;
     }
 }

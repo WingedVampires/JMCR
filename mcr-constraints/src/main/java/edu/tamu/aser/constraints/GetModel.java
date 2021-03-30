@@ -50,17 +50,17 @@ import java.util.Vector;
 public class GetModel {
 	public static Model read(File file) {
 		try {
+            MatchUnsatModel.getInstance().setStandradTime(System.currentTimeMillis() - MatchUnsatModel.getInstance().errorStTime);
+            FileInputStream fis = new FileInputStream(file);
+            SimpleSExprStream p = new SimpleSExprStream(fis);
+            p.setListsAsVectors(true);
 
-			FileInputStream fis = new FileInputStream(file);
-			SimpleSExprStream p = new SimpleSExprStream(fis);
-			p.setListsAsVectors(true);
+            String result = readResult(p);
 
-			String result = readResult(p);
+            //get sovling time
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
 
-			//get sovling time
-			BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
-
-			if (result.startsWith("(error "))
+            if (result.startsWith("(error "))
 				throw new Error("smt file has errors");
 			//System.out.println("Feasible: " + "sat".equals(result));
 
@@ -86,9 +86,9 @@ public class GetModel {
 				fis.close();
 				return model;
 			} else if ("unsat".equals(result)) {
-				// 设置匹配的停止时间
-				MatchUnsatModel.getInstance().setStandradTime(System.currentTimeMillis() - MatchUnsatModel.getInstance().errorStTime);
-				//constraint not satisfied
+                // 设置匹配的停止时间
+//				MatchUnsatModel.getInstance().setStandradTime(System.currentTimeMillis() - MatchUnsatModel.getInstance().errorStTime);
+                //constraint not satisfied
 				String line = reader.readLine();
 				while (line != null) {
 					if (line.contains("A")) {

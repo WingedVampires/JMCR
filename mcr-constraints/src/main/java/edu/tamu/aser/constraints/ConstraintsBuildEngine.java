@@ -1199,7 +1199,6 @@ public class ConstraintsBuildEngine {
      */
 
     public Vector<String> generateSchedule(StringBuilder causalConstraint, long gid, Long wgid, long gid_prefix) {
-        MatchUnsatModel.getInstance().errorStTime = System.currentTimeMillis();
         /*
          * I will declare the constraints variables here
          * for all the varaibles that appear in the constraints
@@ -1213,10 +1212,12 @@ public class ConstraintsBuildEngine {
 
 //        String CONS_SETLOGIC = "(set-logic QF_IDL)\n";
             String CONS_SETLOGIC = "(set-option :produce-unsat-cores true)\n(set-logic QF_IDL)\n";
+            MatchUnsatModel.getInstance().errorStTime = System.currentTimeMillis();
             task.sendMessage(CONS_SETLOGIC + CONS_DECLARE + CONS_ASSERT_VALID + CONS_ASSERT_PO + causalConstraint + CONS_GETMODEL, makeVariable(gid), makeVariable(wgid), makeVariable(gid_prefix), reachEngine, causalConstraint.toString(), config);
 
             return task.schedule;
         } else {
+//            System.out.println("Jump succeed!");
             MatchUnsatModel.jumpNum++;
 
             return null;

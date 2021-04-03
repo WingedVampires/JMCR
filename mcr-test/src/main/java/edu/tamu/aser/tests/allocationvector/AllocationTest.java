@@ -20,12 +20,12 @@ public class AllocationTest {
         allocationTest.testFullAllocationAndFree();
     }
 
-//    @Test
+    @Test
     public void testOneTenthAllocation() throws Exception {
         allocateAndEnsureNoErrors(40, 2, 2);
     }
 
-    @Test
+    //    @Test
     public void testOneTenthFreeing() throws Exception {
         freeAndEnsureNoErrors(40, 2, 2);
     }

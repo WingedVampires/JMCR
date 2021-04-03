@@ -1,14 +1,26 @@
 package external.jpf_test_cases.rax;
 
-class Event{
-  int count=0;
-  public synchronized void wait_for_event(){
-    try{wait();}catch(InterruptedException e){};
-  }
-  public synchronized void signal_event(){
-    count = count + 1;
-    notifyAll();
-  }
+import edu.tamu.aser.reex.JUnit4MCRRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.fail;
+
+class Event {
+    int count = 0;
+
+    public synchronized void wait_for_event() {
+        try {
+            wait();
+        } catch (InterruptedException e) {
+        }
+        ;
+    }
+
+    public synchronized void signal_event() {
+        count = count + 1;
+        notifyAll();
+    }
 }
 
 class FirstTask extends java.lang.Thread{
@@ -45,15 +57,28 @@ class SecondTask extends java.lang.Thread{
   }
 }
 
+@RunWith(JUnit4MCRRunner.class)
 public class START {
-  public static void main(String[] args){
-    Event event1 = new Event();
-    Event event2 = new Event();
-    FirstTask  task1 = new FirstTask(event1,event2);
-    SecondTask task2 = new SecondTask(event1,event2);
-    task1.start(); task2.start();
+    public static void main(String[] args) {
+        Event event1 = new Event();
+        Event event2 = new Event();
+        FirstTask task1 = new FirstTask(event1, event2);
+        SecondTask task2 = new SecondTask(event1, event2);
+        task1.start();
+        task2.start();
 
-  }
+    }
+
+    @Test
+    public void test() throws InterruptedException {
+        try {
+//			lock = new Object();
+            START.main(null);
+        } catch (Exception e) {
+            System.out.println("here");
+            fail();
+        }
+    }
 }
 //@The following comments are auto-generated to save options for testing the current file
 //@jcute.optionPrintOutput=false

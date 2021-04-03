@@ -5,27 +5,47 @@ package external.jpf_test_cases.readerswriters;
 // http://gee.cs.oswego.edu/dl/cpj/classes/
 
 
+import edu.tamu.aser.reex.JUnit4MCRRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.fail;
+
+@RunWith(JUnit4MCRRunner.class)
 public class RWVSNTest {
     static RWPrinter rwp;
 
-    public static void main (String argv[]) {
+    public static void main(String argv[]) {
         rwp = new RWPrinter();
-        
+
         new Writer(rwp).start();
         new Reader(rwp).start();
         new Writer(rwp).start();
 //        new Reader(rwp).start();
     }
+
+    @Test
+    public void test() throws InterruptedException {
+        try {
+//			lock = new Object();
+            RWVSNTest.main(null);
+        } catch (Exception e) {
+            System.out.println("here");
+            fail();
+        }
+    }
 }
 
 
 final class Reader extends Thread {
-  protected RWPrinter rwp;
+    protected RWPrinter rwp;
 
-  public Reader(RWPrinter r) { rwp = r;}
+    public Reader(RWPrinter r) {
+        rwp = r;
+    }
 
-  public void run() {
-     for(int i=0;i<3;i++) rwp.read();
+    public void run() {
+        for (int i = 0; i < 3; i++) rwp.read();
   } 
 }
 

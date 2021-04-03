@@ -4,19 +4,25 @@ package external.jpf_test_cases.boundedbuffer;
 /* Concurrency: State Models & Java Programs - Jeff Magee & Jeff Kramer */
 /* has a deadlock */
 
+import edu.tamu.aser.reex.JUnit4MCRRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import static org.junit.Assert.fail;
+
 /****************************MAIN**************************/
 /* written by me */
-
+@RunWith(JUnit4MCRRunner.class)
 public class BoundedBuffer {
-  static int SIZE = 1; /* parameter */
-  static Buffer buf;
-  
-  public static void main(String [] args) {
-    buf = new Buffer(SIZE);
-   
-    new Producer(buf).start();
-    new Consumer(buf).start();
-    new Producer(buf).start();
+    static int SIZE = 1; /* parameter */
+    static Buffer buf;
+
+    public static void main(String[] args) {
+        buf = new Buffer(SIZE);
+
+        new Producer(buf).start();
+        new Consumer(buf).start();
+        new Producer(buf).start();
 //    new Consumer(buf).start();
 
 //    new Producer(buf).start();
@@ -24,7 +30,18 @@ public class BoundedBuffer {
 //    new Producer(buf).start();
 //    new Consumer(buf).start();
 
-  }
+    }
+
+    @Test
+    public void test() throws InterruptedException {
+        try {
+//			lock = new Object();
+            BoundedBuffer.main(null);
+        } catch (Exception e) {
+            System.out.println("here");
+            fail();
+        }
+    }
 }
 
 

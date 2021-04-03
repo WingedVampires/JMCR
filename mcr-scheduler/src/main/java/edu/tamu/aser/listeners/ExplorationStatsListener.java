@@ -133,6 +133,7 @@ public class ExplorationStatsListener extends ExplorationListenerAdapter {
         System.out.println("SMT_FILE_NUMBER: " + MatchUnsatModel.smtNum);
         System.out.println("JUMP_SMT_NUMBER: " + MatchUnsatModel.jumpNum);
         System.out.println("SMT_STANDRAD_TIME: " + MatchUnsatModel.getInstance().getStandradTime());
+//        System.out.println("MAX_SINGLE_UNSAT: " + MatchUnsatModel.maxSingleUnsat);
         if (failureDetected) {
             System.out.println(FAILURE_DETECTED_MESSAGE);
         }

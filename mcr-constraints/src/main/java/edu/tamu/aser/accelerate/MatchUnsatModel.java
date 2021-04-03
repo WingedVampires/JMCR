@@ -30,6 +30,8 @@ public class MatchUnsatModel {
     // 单一的条件
     private String singleCons = "";
 
+    public static long maxSingleUnsat = 0;
+
     public static MatchUnsatModel getInstance() {
         if (instance == null) {
             instance = new MatchUnsatModel();
@@ -38,22 +40,6 @@ public class MatchUnsatModel {
         return instance;
     }
 
-    public static void main(String[] args) {
-        ArrayList<String> a = new ArrayList<>();
-        ArrayList<String> b = new ArrayList<>();
-        ArrayList<String> c = new ArrayList<>();
-        a.add("fjkj");
-        b.add("fjkj");
-        a.add("fjeo");
-        c.add("fjeo");
-        ArrayList<ArrayList<String>> list = new ArrayList<>();
-        list.add(a);
-        list.add(b);
-        list.add(c);
-
-        System.out.println(MatchUnsatModel.getInstance().dealSingleCondition(list));
-        System.out.println(list.size());
-    }
 
 
     /**
@@ -72,11 +58,19 @@ public class MatchUnsatModel {
      */
     public void addUnsatCore(String unsatCore) {
         ArrayList<ArrayList<String>> unsatConditions = new ArrayList<>();
-
+        long numOfUnsat = 1;
         for (String assertName : unsatCore.split(" ")) {
             String assertContent = assertNameToContentMap.get(assertName);
-            unsatConditions.add(getAssertAllPossibleCondition(assertContent));
+            ArrayList<String> list = getAssertAllPossibleCondition(assertContent);
+            unsatConditions.add(list);
+            numOfUnsat *= list.size();
         }
+
+//        System.out.println(numOfUnsat);
+//        maxSingleUnsat = Math.max(maxSingleUnsat, numOfUnsat);
+
+        if (numOfUnsat > 1000) return;
+
 
         // 检查是否需要删除当前unsat-core或是否需要删除历史unsat-core
         for (HashSet<String> hashSet : getAssertsAllPossibleCondition(unsatConditions)) {
@@ -171,14 +165,14 @@ public class MatchUnsatModel {
         stack.push(new Pair<>(0, cons));
 
         while (!stack.isEmpty()) {
+            if (System.currentTimeMillis() - stTime >= standradTime)
+                return true;
             Pair<Integer, String> p = stack.pop();
             int index = p.getKey();
             String str = p.getValue();
 
             if (index >= conditions.size()) {
                 boolean flag = true;
-                if (System.currentTimeMillis() - stTime >= standradTime)
-                    return true;
 
                 HashSet<String> conss = new HashSet<>(Arrays.asList(str.split(" ")));
 
@@ -337,7 +331,7 @@ public class MatchUnsatModel {
     private TreeSet<HashSet<String>> getAssertsAllPossibleCondition(ArrayList<ArrayList<String>> conditionsList) {
         ArrayList<String> tem;
         ArrayList<String> list;
-        String s;
+//        String s;
         ArrayList<String> result = new ArrayList<>();
 
         ArrayList<String> tmp = new ArrayList<>();
@@ -348,15 +342,19 @@ public class MatchUnsatModel {
 
             for (String r : result)
                 for (String l : list) {
-                    s = r + " " + l;
-                    tmp.add(s);
 
+//                    s = r + " " + l;
+                    tmp.add(r + " " + l);
                 }
 
             tem = result;
             result = tmp;
             tmp = tem;
             tmp.clear();
+
+//            result = tmp;
+//            tmp = new ArrayList<>();
+
         }
 
         TreeSet<HashSet<String>> hashsetResult = new TreeSet<>(new HashSetComparator());
@@ -367,32 +365,39 @@ public class MatchUnsatModel {
         return hashsetResult;
     }
 
+    private TreeSet<HashSet<String>> getAssertsAllPossibleCondition_Stack(ArrayList<ArrayList<String>> conditionsList) {
+        Stack<Pair<Integer, String>> stack = new Stack<>();
+        TreeSet<HashSet<String>> hashsetResult = new TreeSet<>(new HashSetComparator());
+        stack.push(new Pair<>(0, ""));
+
+        while (!stack.isEmpty()) {
+            Pair<Integer, String> p = stack.pop();
+            int index = p.getKey();
+            String str = p.getValue();
+
+            if (index >= conditionsList.size()) {
+//                System.out.println(str);
+                hashsetResult.add(new HashSet<String>(Arrays.asList(str.split(" "))));
+            } else {
+                for (String s : conditionsList.get(index)) {
+                    stack.push(new Pair<>(index + 1, s + " " + str));
+                }
+            }
+        }
+
+        return hashsetResult;
+    }
+
+
     public long getStandradTime() {
         return standradTime;
     }
 
     public void setStandradTime(long time) {
-
-//        standradTime = standradTime * 0.8 <= time ? (standradTime * 2 + time) / 3 : (standradTime * 19 + time) / 20;
-        standradTime = standradTime * 0.8 <= time ? (standradTime * 2 + time) / 3 : standradTime;
+        if (standradTime * 0.8 <= time)
+            standradTime = (standradTime * 2 + time) / 3;
+//        standradTime = standradTime * 0.8 <= time ? (standradTime * 2 + time) / 3 : standradTime;
 
 //        System.out.println(time + "    " + standradTime);
-    }
-
-    /**
-     * 将条件中的单个条件直接提取出来，以便加速循环匹配
-     *
-     * @return 提取出的条件
-     */
-    public String dealSingleCondition(ArrayList<ArrayList<String>> conditions) {
-        String result = "";
-        for (ArrayList<String> list : (ArrayList<ArrayList<String>>) conditions.clone()) {
-            if (list.size() == 1) {
-                result += (list.get(0) + " ");
-                conditions.remove(list);
-            }
-        }
-
-        return result;
     }
 }

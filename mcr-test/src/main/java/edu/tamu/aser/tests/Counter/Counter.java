@@ -40,7 +40,6 @@ public class Counter
             inc.join();
             dec.join();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }

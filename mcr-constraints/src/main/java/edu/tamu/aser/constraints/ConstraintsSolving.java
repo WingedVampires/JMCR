@@ -20,7 +20,6 @@ import java.util.Map.Entry;
  * @author jeffhuang
  */
 public class ConstraintsSolving {
-	private static int count = 0;
 	protected static String OUT = ".smtout";
 
 	private String OS = System.getProperty("os.name").toLowerCase();
@@ -184,7 +183,6 @@ public class ConstraintsSolving {
 	 */
     void sendMessage(String msg, String endVar, String wVar, String endVar_prefix,
                      ReachabilityEngine reachEngine, String causalConstraint, Configuration config) {
-		System.out.println(count++);
 		PrintWriter smtWriter = null;
 		try {
 			smtWriter = Util.newWriter(smtFile, true);
